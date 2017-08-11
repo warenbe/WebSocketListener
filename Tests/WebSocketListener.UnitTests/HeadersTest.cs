@@ -102,8 +102,8 @@ namespace vtortola.WebSockets.UnitTests
                     "Via", "Value2"
                 }
             });
-            Assert.Equal(dict2["Custom"], "Value1");
-            Assert.Equal(dict2[RequestHeader.Via], "Value2");
+            Assert.Equal(dict3["Custom"], "Value1");
+            Assert.Equal(dict3[RequestHeader.Via], "Value2");
         }
 
         [Fact]

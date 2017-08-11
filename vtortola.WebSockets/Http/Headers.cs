@@ -238,8 +238,25 @@ namespace vtortola.WebSockets.Http
             if (nameValueCollection == null) throw new ArgumentNullException(nameof(nameValueCollection));
 
             for (var i = 0; i < nameValueCollection.Count; i++)
-                foreach (var value in nameValueCollection.GetValues(i) ?? new string[0])
-                    this.Add(nameValueCollection.GetKey(i), value);
+            {
+                foreach (var headerValue in nameValueCollection.GetValues(i) ?? new string[0])
+                {
+                    var headerName = nameValueCollection.GetKey(i);
+                    var knownHeaderValue = GetKnownHeaderValue(headerName);
+                    if (knownHeaderValue >= 0)
+                    {
+                        var dontSplit = (GetFlags(knownHeaderValue) & HeaderFlags.DoNotSplit) != 0 || headerValue.IndexOf(',') == -1;
+                        if (dontSplit)
+                            this.Add(headerName, headerValue);
+                        else
+                            this.Add(headerName, TrimAndSplit(headerValue, 0, headerValue.Length));
+                    }
+                    else
+                    {
+                        this.Add(headerName, headerValue);
+                    }
+                }
+            }
         }
         public void AddMany(IEnumerable<KeyValuePair<string, string>> pairs)
         {

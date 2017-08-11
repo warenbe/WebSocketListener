@@ -189,7 +189,7 @@ namespace vtortola.WebSockets.Transports.Sockets
                 }
                 catch (Exception readError) when (readError is ThreadAbortException == false)
                 {
-                    /* ignore shutdown errors */
+                    /* ignore read errors */
                 }
             }
 
