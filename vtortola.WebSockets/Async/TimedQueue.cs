@@ -16,6 +16,7 @@ namespace vtortola.WebSockets.Async
 {
     public abstract class TimedQueue<SubscriptionListT> : IDisposable where SubscriptionListT : class
     {
+        // ReSharper disable once StaticMemberInGenericType
         private static readonly double TicksPerStopwatchTick = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
 
         private const int STATE_CREATED = 0;
@@ -80,7 +81,7 @@ namespace vtortola.WebSockets.Async
             // get queue head (current working time) and find tail(current working time + period)
             // and put/get subscription list from tail
 
-            var head = Volatile.Read(ref this.queueHead);
+            var head = Interlocked.Read(ref this.queueHead);
             var headIndex = GetHeadIndex(head);
             var tailIndex = (headIndex + this.timeSlices + 1) % this.queue.Length;
 
@@ -101,7 +102,7 @@ namespace vtortola.WebSockets.Async
 
                 this.ReleaseSubscriptionList(list);
                 list = currentList;
-            } while (Volatile.Read(ref this.queueHead) != head);
+            } while (Interlocked.Read(ref this.queueHead) != head);
 
             return list;
         }
@@ -118,7 +119,7 @@ namespace vtortola.WebSockets.Async
                 uint headIndex;
                 do
                 {
-                    head = Volatile.Read(ref this.queueHead);
+                    head = Interlocked.Read(ref this.queueHead);
                     headIndex = GetHeadIndex(head);
                     headTime = GetHeadTime(head);
 
@@ -205,7 +206,7 @@ namespace vtortola.WebSockets.Async
 
         public override string ToString()
         {
-            var head = Volatile.Read(ref this.queueHead);
+            var head = Interlocked.Read(ref this.queueHead);
             var headTime = GetHeadTime(head) * this.ticksPerTimeSlice;
             var headIndex = GetHeadIndex(head);
 
