@@ -54,7 +54,7 @@ namespace vtortola.WebSockets.Http
                 try
                 {
                     await _semaphore.WaitAsync(_cancel.Token).ConfigureAwait(false);
-                    var socket = await this._connections.ReceiveAsync(_cancel.Token).ConfigureAwait(false);
+                    var socket = await this._connections.DequeueAsync(_cancel.Token).ConfigureAwait(false);
                     NegotiateWebSocket(socket).LogFault(this.log);
                 }
                 catch (TaskCanceledException)
@@ -113,7 +113,7 @@ namespace vtortola.WebSockets.Http
                 }
 
                 var webSocket = result.Result;
-                if (_negotiations.TrySend(result) == false)
+                if (_negotiations.TryEnqueue(result) == false)
                 {
                     SafeEnd.Dispose(webSocket);
                     return; // too many negotiations
@@ -140,7 +140,7 @@ namespace vtortola.WebSockets.Http
         {
             if (connection == null) throw new ArgumentNullException(nameof(connection));
 
-            if (!this._connections.TrySend(connection))
+            if (!this._connections.TryAdd(connection))
             {
                 if (this.log.IsWarningEnabled)
                     this.log.Warning($"Negotiation queue is full and can't process new connection from '{connection.RemoteEndPoint}'. Connection will be closed.");
@@ -148,9 +148,9 @@ namespace vtortola.WebSockets.Http
             }
         }
 
-        public AsyncQueue<WebSocketNegotiationResult>.ReceiveResult DequeueAsync(CancellationToken cancel)
+        public AsyncQueue<WebSocketNegotiationResult>.TakeResult DequeueAsync(CancellationToken cancel)
         {
-            return _negotiations.ReceiveAsync(cancel);
+            return _negotiations.TakeAsync(cancel);
         }
 
         public void Dispose()
