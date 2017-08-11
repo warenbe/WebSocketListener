@@ -68,6 +68,7 @@ namespace vtortola.WebSockets.UnitTests
 
                 var sb = new StringBuilder();
                 sb.AppendLine(@"HTTP/1.1 500 Internal Server Error");
+                sb.AppendLine(@"Connection: close");
                 sb.AppendLine();
 
                 using (var sr = new StreamReader(connectionOutput))
@@ -330,6 +331,7 @@ namespace vtortola.WebSockets.UnitTests
 
                 var sb = new StringBuilder();
                 sb.AppendLine(@"HTTP/1.1 400 Bad Request");
+                sb.AppendLine(@"Connection: close");
                 sb.AppendLine();
 
                 using (var sr = new StreamReader(connectionOutput))
@@ -783,6 +785,7 @@ namespace vtortola.WebSockets.UnitTests
 
                 var sb = new StringBuilder();
                 sb.AppendLine(@"HTTP/1.1 401 Unauthorized");
+                sb.AppendLine(@"Connection: close");
                 sb.AppendLine();
 
                 using (var sr = new StreamReader(connectionOutput))
@@ -981,6 +984,7 @@ namespace vtortola.WebSockets.UnitTests
 
                 var sb = new StringBuilder();
                 sb.AppendLine(@"HTTP/1.1 400 Bad Request");
+                sb.AppendLine(@"Connection: close");
                 sb.AppendLine();
 
                 using (var sr = new StreamReader(connectionOutput))
