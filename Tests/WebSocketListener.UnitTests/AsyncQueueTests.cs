@@ -28,16 +28,16 @@ namespace vtortola.WebSockets.UnitTests
         [InlineData(50)]
         [InlineData(100)]
         [InlineData(1000)]
-        public void TrySendAndTryReceive(int count)
+        public void TryEnqueueAndTryDequeue(int count)
         {
             var asyncQueue = new AsyncQueue<int>();
             for (var i = 0; i < count; i++)
-                Assert.True(asyncQueue.TrySend(i), "fail to send");
+                Assert.True(asyncQueue.TryEnqueue(i), "fail to send");
 
             for (var i = 0; i < count; i++)
             {
                 var value = default(int);
-                Assert.True(asyncQueue.TryReceive(out value), "fail to receive");
+                Assert.True(asyncQueue.TryDequeue(out value), "fail to receive");
                 Assert.Equal(i, value);
             }
 
@@ -51,17 +51,17 @@ namespace vtortola.WebSockets.UnitTests
         [InlineData(50)]
         [InlineData(100)]
         [InlineData(1000)]
-        public void ParallelSendAndTryReceive(int count)
+        public void ParallelSendAndTryDequeue(int count)
         {
             var asyncQueue = new AsyncQueue<int>();
             var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, TaskScheduler = TaskScheduler.Default };
             var items = Enumerable.Range(0, count).ToArray();
             var expectedSum = items.Sum();
-            Parallel.For(0, count, options, i => Assert.True(asyncQueue.TrySend(i), "fail to send"));
+            Parallel.For(0, count, options, i => Assert.True(asyncQueue.TryEnqueue(i), "fail to send"));
 
             var actualSum = 0;
             var value = default(int);
-            while (asyncQueue.TryReceive(out value))
+            while (asyncQueue.TryDequeue(out value))
                 actualSum += value;
 
             Assert.Equal(expectedSum, actualSum);
@@ -76,7 +76,7 @@ namespace vtortola.WebSockets.UnitTests
         [InlineData(50)]
         [InlineData(100)]
         [InlineData(1000)]
-        public async Task TrySendAndReceiveAsync(int count)
+        public async Task TryEnqueueAndDequeueAsync(int count)
         {
             var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(1000));
             var asyncQueue = new AsyncQueue<int>();
@@ -91,7 +91,7 @@ namespace vtortola.WebSockets.UnitTests
 
                 while (cancellation.IsCancellationRequested == false)
                 {
-                    var receiveValueTask = asyncQueue.ReceiveAsync(cancellation.Token).ConfigureAwait(false);
+                    var receiveValueTask = asyncQueue.DequeueAsync(cancellation.Token).ConfigureAwait(false);
                     var value1 = await receiveValueTask;
                     var value2 = await receiveValueTask;
 
@@ -107,7 +107,7 @@ namespace vtortola.WebSockets.UnitTests
             await Task.Delay(10, cancellation.Token).ConfigureAwait(false);
 
             for (var i = 0; i < count; i++)
-                Assert.True(asyncQueue.TrySend(i), "fail to send");
+                Assert.True(asyncQueue.TryEnqueue(i), "fail to send");
 
             await receiveTask.ConfigureAwait(false);
 
@@ -123,7 +123,7 @@ namespace vtortola.WebSockets.UnitTests
         [InlineData(50)]
         [InlineData(100)]
         [InlineData(1000)]
-        public async Task ParallelSendAndReceiveAsync(int count)
+        public async Task ParallelSendAndDequeueAsync(int count)
         {
             var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, TaskScheduler = TaskScheduler.Default };
@@ -139,7 +139,7 @@ namespace vtortola.WebSockets.UnitTests
 
                 while (cancellation.IsCancellationRequested == false)
                 {
-                    var value = await asyncQueue.ReceiveAsync(cancellation.Token).ConfigureAwait(false);
+                    var value = await asyncQueue.DequeueAsync(cancellation.Token).ConfigureAwait(false);
 
                     Interlocked.Add(ref actualSum, value);
                     if (Interlocked.Increment(ref ct) == count)
@@ -147,7 +147,7 @@ namespace vtortola.WebSockets.UnitTests
                 }
             })();
 
-            Parallel.For(0, count, options, i => Assert.True(asyncQueue.TrySend(i), "fail to send"));
+            Parallel.For(0, count, options, i => Assert.True(asyncQueue.TryEnqueue(i), "fail to send"));
 
             await receiveTask.ConfigureAwait(false);
 
@@ -159,7 +159,7 @@ namespace vtortola.WebSockets.UnitTests
         [InlineData(1)]
         [InlineData(2)]
         [InlineData(4)]
-        public async Task BoundedInfiniteSendAndReceiveAsync(int seconds)
+        public async Task BoundedInfiniteSendAndDequeueAsync(int seconds)
         {
             var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(seconds));
             var asyncQueue = new AsyncQueue<int>(10);
@@ -172,7 +172,7 @@ namespace vtortola.WebSockets.UnitTests
 
                 while (cancellation.IsCancellationRequested == false)
                 {
-                    var actual = await asyncQueue.ReceiveAsync(cancellation.Token).ConfigureAwait(false);
+                    var actual = await asyncQueue.DequeueAsync(cancellation.Token).ConfigureAwait(false);
                     ct++;
                     Assert.Equal(expectedValue, actual);
                 }
@@ -183,7 +183,7 @@ namespace vtortola.WebSockets.UnitTests
                 await Task.Yield();
                 while (cancellation.IsCancellationRequested == false)
                 {
-                    asyncQueue.TrySend(expectedValue);
+                    asyncQueue.TryEnqueue(expectedValue);
                     await Task.Delay(10).ConfigureAwait(false);
                 }
             })().IgnoreFaultOrCancellation().ConfigureAwait(false);
@@ -203,7 +203,7 @@ namespace vtortola.WebSockets.UnitTests
         [InlineData(2)]
         [InlineData(3)]
         [InlineData(4)]
-        public async Task FastSendAndSlowReceiveAsync(int seconds)
+        public async Task FastSendAndSlowDequeueAsync(int seconds)
         {
             var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(seconds));
             var asyncQueue = new AsyncQueue<int>(10);
@@ -217,7 +217,7 @@ namespace vtortola.WebSockets.UnitTests
                 while (cancellation.IsCancellationRequested == false)
                 {
                     await Task.Delay(2).ConfigureAwait(false);
-                    var actual = await asyncQueue.ReceiveAsync(cancellation.Token).ConfigureAwait(false);
+                    var actual = await asyncQueue.DequeueAsync(cancellation.Token).ConfigureAwait(false);
                     ct++;
                     Assert.Equal(expectedValue, actual);
                 }
@@ -228,7 +228,7 @@ namespace vtortola.WebSockets.UnitTests
                 await Task.Yield();
                 while (cancellation.IsCancellationRequested == false)
                 {
-                    asyncQueue.TrySend(expectedValue);
+                    asyncQueue.TryEnqueue(expectedValue);
                     await Task.Delay(1).ConfigureAwait(false);
                 }
             })().IgnoreFaultOrCancellation().ConfigureAwait(false);
@@ -247,7 +247,7 @@ namespace vtortola.WebSockets.UnitTests
         [InlineData(2)]
         [InlineData(3)]
         [InlineData(4)]
-        public async Task SlowSendAndFastReceiveAsync(int seconds)
+        public async Task SlowSendAndFastDequeueAsync(int seconds)
         {
             var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
             var asyncQueue = new AsyncQueue<int>(10);
@@ -261,7 +261,7 @@ namespace vtortola.WebSockets.UnitTests
                 while (cancellation.IsCancellationRequested == false)
                 {
                     await Task.Delay(1).ConfigureAwait(false);
-                    var actual = await asyncQueue.ReceiveAsync(cancellation.Token).ConfigureAwait(false);
+                    var actual = await asyncQueue.DequeueAsync(cancellation.Token).ConfigureAwait(false);
                     ct++;
                     Assert.Equal(expectedValue, actual);
                 }
@@ -272,7 +272,7 @@ namespace vtortola.WebSockets.UnitTests
                 await Task.Yield();
                 while (cancellation.IsCancellationRequested == false)
                 {
-                    asyncQueue.TrySend(expectedValue);
+                    asyncQueue.TryEnqueue(expectedValue);
                     await Task.Delay(2).ConfigureAwait(false);
                 }
             })().IgnoreFaultOrCancellation().ConfigureAwait(false);
@@ -306,7 +306,7 @@ namespace vtortola.WebSockets.UnitTests
                 await Task.Yield();
                 while (cancellation.IsCancellationRequested == false)
                 {
-                    if (asyncQueue.TrySend(sendValue++) == false)
+                    if (asyncQueue.TryEnqueue(sendValue++) == false)
                         return;
                     await Task.Delay(10).ConfigureAwait(false);
                 }
@@ -319,7 +319,7 @@ namespace vtortola.WebSockets.UnitTests
 
             var value = default(int);
             var actualSum = 0;
-            while (asyncQueue.TryReceive(out value))
+            while (asyncQueue.TryDequeue(out value))
                 actualSum++;
             var expectedSum = Enumerable.Range(0, sendValue).Sum();
 
@@ -348,7 +348,7 @@ namespace vtortola.WebSockets.UnitTests
                 await Task.Yield();
                 while (cancellation.IsCancellationRequested == false)
                 {
-                    if (asyncQueue.TrySend(sendValue++) == false)
+                    if (asyncQueue.TryEnqueue(sendValue++) == false)
                         return;
                     await Task.Delay(10).ConfigureAwait(false);
                 }
@@ -367,12 +367,12 @@ namespace vtortola.WebSockets.UnitTests
         }
 
         [Fact]
-        public async Task ReceiveAsyncCancellation()
+        public async Task DequeueAsyncCancellation()
         {
             var asyncQueue = new AsyncQueue<int>();
             var cancellation = new CancellationTokenSource();
 
-            var receiveAsync = asyncQueue.ReceiveAsync(cancellation.Token);
+            var receiveAsync = asyncQueue.DequeueAsync(cancellation.Token);
             cancellation.CancelAfter(10);
 
             var timeout = Task.Delay(1000);
@@ -388,11 +388,11 @@ namespace vtortola.WebSockets.UnitTests
         }
 
         [Fact]
-        public async Task ReceiveAsyncCloseCancellation()
+        public async Task DequeueAsyncCloseCancellation()
         {
             var asyncQueue = new AsyncQueue<int>();
             var cancellation = new CancellationTokenSource(2000);
-            var receiveAsync = asyncQueue.ReceiveAsync(cancellation.Token);
+            var receiveAsync = asyncQueue.DequeueAsync(cancellation.Token);
 
             var timeout = Task.Delay(1000);
             var recvTask = Assert.ThrowsAsync<OperationCanceledException>(async () =>
@@ -409,11 +409,11 @@ namespace vtortola.WebSockets.UnitTests
         }
 
         [Fact]
-        public async Task ReceiveAsyncCloseError()
+        public async Task DequeueAsyncCloseError()
         {
             var asyncQueue = new AsyncQueue<int>();
             var cancellation = new CancellationTokenSource(2000);
-            var receiveAsync = asyncQueue.ReceiveAsync(cancellation.Token);
+            var receiveAsync = asyncQueue.DequeueAsync(cancellation.Token);
 
             var timeout = Task.Delay(1000);
             var recvTask = Assert.ThrowsAsync<IOException>(async () =>
@@ -430,11 +430,11 @@ namespace vtortola.WebSockets.UnitTests
         }
 
         [Fact]
-        public async Task ReceiveAsyncCloseReceiveAllCancellation()
+        public async Task DequeueAsyncCloseReceiveAllCancellation()
         {
             var asyncQueue = new AsyncQueue<int>();
             var cancellation = new CancellationTokenSource(2000);
-            var receiveAsync = asyncQueue.ReceiveAsync(cancellation.Token);
+            var receiveAsync = asyncQueue.DequeueAsync(cancellation.Token);
 
             var timeout = Task.Delay(1000);
             var recvTask = Assert.ThrowsAsync<OperationCanceledException>(async () =>
@@ -467,13 +467,13 @@ namespace vtortola.WebSockets.UnitTests
             {
                 var item = default(int);
                 if (items.TryDequeue(out item))
-                    if (asyncQueue.TrySend(item) == false)
+                    if (asyncQueue.TryEnqueue(item) == false)
                         items.Enqueue(item);
             }));
 
             await Task.Delay(1).ConfigureAwait(false);
 
-            var itemsInAsyncQueue = asyncQueue.CloseAndReceiveAll(); // deny TrySend
+            var itemsInAsyncQueue = asyncQueue.CloseAndReceiveAll(); // deny TryEnqueue
             cancellationSource.Cancel(); // stop parallel for
 
             await sendTask.IgnoreFaultOrCancellation().ConfigureAwait(false);
