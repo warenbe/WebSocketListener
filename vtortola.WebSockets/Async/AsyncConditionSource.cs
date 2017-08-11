@@ -36,7 +36,7 @@ namespace vtortola.WebSockets.Async
 
                 if (this.IsCompleted)
                 {
-                    DelegateHelper.QueueContinuation(continuation, true, this.conditionSource.ContinueOnCapturedContext);
+                    DelegateHelper.QueueContinuation(continuation, this.conditionSource.ContinueOnCapturedContext, this.conditionSource.Schedule);
                     return;
                 }
 
@@ -52,7 +52,7 @@ namespace vtortola.WebSockets.Async
 
                 if (this.IsCompleted)
                 {
-                    DelegateHelper.UnsafeQueueContinuation(continuation, false, this.conditionSource.ContinueOnCapturedContext);
+                    DelegateHelper.UnsafeQueueContinuation(continuation, this.conditionSource.ContinueOnCapturedContext, this.conditionSource.Schedule);
                     return;
                 }
 
@@ -74,6 +74,7 @@ namespace vtortola.WebSockets.Async
         private Action unsafeContinuation;
 
         public AsyncConditionVariable Condition => new AsyncConditionVariable(this);
+
         public bool ContinueOnCapturedContext { get; set; }
         public bool Schedule { get; set; }
 
@@ -101,10 +102,7 @@ namespace vtortola.WebSockets.Async
             var dispatchInfo = default(ExceptionDispatchInfo);
             if (error == null)
             {
-                try
-                {
-                    throw new OperationCanceledException();
-                }
+                try { throw new OperationCanceledException(); }
                 catch (OperationCanceledException cancelError)
                 {
                     dispatchInfo = ExceptionDispatchInfo.Capture(cancelError);
