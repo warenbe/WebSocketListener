@@ -25,61 +25,52 @@ namespace vtortola.WebSockets
         public abstract override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken);
 
 #if !NETSTANDARD && !UAP
-        public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        {
-            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-            if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
-            if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+		public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
+			if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+            
+			if (callback != null || state != null)
+			{
+				var completionSource = new TaskCompletionSource<int>(state);
+				this.ReadAsync(buffer, offset, count, CancellationToken.None).PropagateResultTo(completionSource);
+				if (callback != null)
+					completionSource.Task.ContinueWith((t, s) => ((AsyncCallback)s).Invoke(t), callback, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+				return completionSource.Task;
+			}
+			else
+			{
+				return this.ReadAsync(buffer, offset, count, CancellationToken.None);
+			}
+		}
+		public sealed override int EndRead(IAsyncResult asyncResult)
+		{
+			return ((Task<int>)asyncResult).Result;
+		}
+		public sealed override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+		{
+			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+			if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
+			if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
 
-            var wrapper = new AsyncResultTask<int>(this.ReadAsync(buffer, offset, count), state);
-            wrapper.Task.ContinueWith(t =>
-            {
-                if (callback != null)
-                    callback(wrapper);
-            });
-            return wrapper;
-        }
-
-        public sealed override int EndRead(IAsyncResult asyncResult)
-        {
-            try
-            {
-                return ((AsyncResultTask<int>)asyncResult).Task.Result;
-            }
-            catch (Exception readError)
-            {
-                ExceptionDispatchInfo.Capture(readError.Unwrap()).Throw();
-                // ReSharper disable once HeuristicUnreachableCode
-                throw;
-            }
-        }
-
-        public sealed override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-        {
-            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-            if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
-            if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
-
-            var wrapper = new AsyncResultTask(this.WriteAsync(buffer, offset, count), state);
-            wrapper.Task.ContinueWith(t =>
-            {
-                callback?.Invoke(wrapper);
-            });
-            return wrapper;
-        }
-        public sealed override void EndWrite(IAsyncResult asyncResult)
-        {
-            try
-            {
-                ((AsyncResultTask)asyncResult).Task.Wait();
-            }
-            catch (AggregateException writeError)
-            {
-                ExceptionDispatchInfo.Capture(writeError.Unwrap()).Throw();
-                // ReSharper disable once HeuristicUnreachableCode
-                throw;
-            }
-        }
+			if (callback != null || state != null)
+			{
+				var completionSource = new TaskCompletionSource<bool>(state);
+				this.WriteAsync(buffer, offset, count, CancellationToken.None).PropagateResultTo(completionSource);
+				if (callback != null)
+					completionSource.Task.ContinueWith((t, s) => ((AsyncCallback)s).Invoke(t), callback, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+				return completionSource.Task;
+			}
+			else
+			{
+				return this.WriteAsync(buffer, offset, count, CancellationToken.None);
+			}
+		}
+		public sealed override void EndWrite(IAsyncResult asyncResult)
+		{
+			((Task)asyncResult).Wait();
+		}
 #endif
 
         public sealed override long Seek(long offset, SeekOrigin origin)
