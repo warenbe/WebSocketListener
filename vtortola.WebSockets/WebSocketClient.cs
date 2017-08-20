@@ -71,7 +71,13 @@ namespace vtortola.WebSockets
             return false;
         }
 
-        public async Task<WebSocket> ConnectAsync(Uri address, CancellationToken cancellation)
+
+        public Task<WebSocket> ConnectAsync(Uri address, CancellationToken cancellation = default(CancellationToken))
+        {
+            return this.ConnectAsync(address, null, cancellation);
+        }
+
+        public async Task<WebSocket> ConnectAsync(Uri address, Headers<RequestHeader> requestHeaders = null, CancellationToken cancellation = default(CancellationToken))
         {
             try
             {
@@ -79,7 +85,7 @@ namespace vtortola.WebSockets
                 if (this.workCancellationSource.IsCancellationRequested)
                     throw new WebSocketException("Client is currently closing or closed.");
 
-                var workCancellation = this.workCancellationSource?.Token ?? CancellationToken.None;
+                var workCancellation = this.workCancellationSource.Token;
                 var negotiationCancellation = this.negotiationsTimeoutQueue?.GetSubscriptionList().Token ?? CancellationToken.None;
 
                 if (cancellation.CanBeCanceled || workCancellation.CanBeCanceled || negotiationCancellation.CanBeCanceled)
@@ -89,6 +95,10 @@ namespace vtortola.WebSockets
                 {
                     RequestUri = address,
                 };
+
+                if (requestHeaders != null)
+                    request.Headers.AddMany(requestHeaders);
+
                 var handshake = new WebSocketHandshake(request);
                 var pendingRequest = this.OpenConnectionAsync(handshake, cancellation);
 
