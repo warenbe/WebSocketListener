@@ -18,13 +18,6 @@ namespace WebSocketListenerTests.Echo
             // configuring logging
             XmlConfigurator.Configure();
 
-            if (PerformanceCounters.CreatePerformanceCounters())
-                return;
-
-            // reset
-            PerformanceCounters.Connected.RawValue = 0;
-
-
             Log.Warning("Starting Echo Server");
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
@@ -39,6 +32,7 @@ namespace WebSocketListenerTests.Echo
                 SubProtocols = new[] { "text" },
                 PingTimeout = TimeSpan.FromSeconds(5),
                 NegotiationTimeout = TimeSpan.FromSeconds(5),
+                PingMode = PingMode.Manual,
                 ParallelNegotiations = 16,
                 NegotiationQueueCapacity = 256,
                 BufferManager = BufferManager.CreateBufferManager(bufferPoolSize, bufferSize),
@@ -120,7 +114,6 @@ namespace WebSocketListenerTests.Echo
         {
             Log.Warning("Client '" + webSocket.RemoteEndpoint + "' connected.");
             var sw = new Stopwatch();
-            PerformanceCounters.Connected.Increment();
             try
             {
                 while (webSocket.IsConnected && !cancellation.IsCancellationRequested)
@@ -132,17 +125,12 @@ namespace WebSocketListenerTests.Echo
                             break; // webSocket is disconnected
 
                         sw.Restart();
-                        PerformanceCounters.MessagesIn.Increment();
 
                         await webSocket.WriteStringAsync(messageText, cancellation).ConfigureAwait(false);
 
                         Log.Warning("Client '" + webSocket.RemoteEndpoint + "' sent: " + messageText + ".");
 
-                        PerformanceCounters.MessagesOut.Increment();
                         sw.Stop();
-
-                        PerformanceCounters.Delay.IncrementBy(sw.ElapsedTicks);
-                        PerformanceCounters.DelayBase.Increment();
                     }
                     catch (TaskCanceledException)
                     {
@@ -158,7 +146,6 @@ namespace WebSocketListenerTests.Echo
             finally
             {
                 webSocket.Dispose();
-                PerformanceCounters.Connected.Decrement();
                 Log.Warning("Client '" + webSocket.RemoteEndpoint + "' disconnected.");
             }
         }
