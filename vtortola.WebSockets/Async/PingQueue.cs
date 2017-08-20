@@ -47,6 +47,7 @@ namespace vtortola.WebSockets.Async
                         DebugLogger.Instance.Warning("An error occurred while sending ping.", pingError);
                 }
             }
+            this.listPool.Return(subscriptionList);
         }
     }
 
