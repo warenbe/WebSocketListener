@@ -45,7 +45,7 @@ https://github.com/deniszykov/WebSocketListener</Description>
 			<Output TaskParameter="Path" PropertyName="FrameworkPath" />
 		</GetFrameworkPath>
 		<PropertyGroup>
-			<ILRepack Condition="'$(ILRepack)' == ''">$(NuGetPackageFolders)ilrepack\2.1.0-beta1\tools\ILRepack.exe</ILRepack>
+			<ILRepack Condition="'$(ILRepack)' == ''">$(NuGetPackageRoot)ilrepack\2.1.0-beta1\tools\ILRepack.exe</ILRepack>
 			<ILRepackTargetPlatform Condition="'$(TargetFramework)' == 'net45'">v4,$(FrameworkPath)</ILRepackTargetPlatform>
 			<ILRepackTargetPlatform Condition="'$(TargetFramework)' == 'netstandard1.3'">v4</ILRepackTargetPlatform>
 			<WSLSignKey>$(ProjectDir)../WebSocketListener.snk</WSLSignKey>
