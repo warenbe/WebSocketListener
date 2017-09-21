@@ -47,13 +47,13 @@ namespace vtortola.WebSockets.Async
             {
                 try
                 {
-                    throw new InvalidOperationException("Queue is closed and can't accept or give new items.");
+                    throw new InvalidOperationException("Connection is closed and can't accept or give new items.");
                 }
                 catch (InvalidOperationException closeError)
                 {
                     return ExceptionDispatchInfo.Capture(closeError);
                 }
-            }, LazyThreadSafetyMode.None);
+            }, LazyThreadSafetyMode.ExecutionAndPublication);
 
             DefaultCanceledError = new Lazy<ExceptionDispatchInfo>(() =>
             {
@@ -65,19 +65,7 @@ namespace vtortola.WebSockets.Async
                 {
                     return ExceptionDispatchInfo.Capture(canceledError);
                 }
-            }, LazyThreadSafetyMode.None);
-
-            DefaultCanceledError = new Lazy<ExceptionDispatchInfo>(() =>
-            {
-                try
-                {
-                    throw new ObjectDisposedException(typeof(AsyncQueue<ItemT>).FullName);
-                }
-                catch (ObjectDisposedException disposedError)
-                {
-                    return ExceptionDispatchInfo.Capture(disposedError);
-                }
-            }, LazyThreadSafetyMode.None);
+            }, LazyThreadSafetyMode.ExecutionAndPublication);
         }
         protected AsyncCollection(CollectionT collection, Func<CollectionT, bool> emptyCheck, int boundedCapacity = UNBOUND)
         {
@@ -92,7 +80,7 @@ namespace vtortola.WebSockets.Async
             this.closeError = null;
         }
 
-        public TakeResult TakeAsync(CancellationToken cancellation)
+        protected TakeResult TakeAsync(CancellationToken cancellation)
         {
             var newDequeueAsync = new TakeResult(this, cancellation, true, false);
             if (Interlocked.CompareExchange(ref this.takeResult, newDequeueAsync, null) != null)
@@ -103,7 +91,7 @@ namespace vtortola.WebSockets.Async
 
             return newDequeueAsync;
         }
-        public bool TryTake(out ItemT value)
+        protected bool TryTake(out ItemT value)
         {
             value = default(ItemT);
             if (this.IsClosed)
@@ -116,7 +104,7 @@ namespace vtortola.WebSockets.Async
             }
             return false;
         }
-        public bool TryAdd(ItemT value)
+        protected bool TryAdd(ItemT value)
         {
             Interlocked.Increment(ref this.sendCounter);
             var result = false;
@@ -140,8 +128,16 @@ namespace vtortola.WebSockets.Async
             this.takeResult?.CheckForCompletion();
             return result;
         }
+        bool IProducerConsumerCollection<ItemT>.TryTake(out ItemT value)
+        {
+            return this.TryTake(out value);
+        }
+        bool IProducerConsumerCollection<ItemT>.TryAdd(ItemT value)
+        {
+            return this.TryAdd(value);
+        }
 
-        public void Close(Exception closeError = null)
+        public void ClearAndClose(Exception closeError = null)
         {
             var closeErrorDispatchInfo = closeError != null ? ExceptionDispatchInfo.Capture(closeError) : DefaultCloseError.Value;
             if (Interlocked.CompareExchange(ref this.closeError, closeErrorDispatchInfo, null) != null)
@@ -149,7 +145,7 @@ namespace vtortola.WebSockets.Async
 
             this.takeResult?.CheckForCompletion();
         }
-        public IReadOnlyList<ItemT> CloseAndReceiveAll(Exception closeError = null)
+        public IReadOnlyList<ItemT> TakeAllAndClose(Exception closeError = null)
         {
             var closeErrorDispatchInfo = closeError != null ? ExceptionDispatchInfo.Capture(closeError) : DefaultCloseError.Value;
             if (Interlocked.CompareExchange(ref this.closeError, closeErrorDispatchInfo, null) != null)

@@ -140,7 +140,7 @@ namespace vtortola.WebSockets.Http
         {
             if (connection == null) throw new ArgumentNullException(nameof(connection));
 
-            if (!this._connections.TryAdd(connection))
+            if (!this._connections.TryEnqueue(connection))
             {
                 if (this.log.IsWarningEnabled)
                     this.log.Warning($"Negotiation queue is full and can't process new connection from '{connection.RemoteEndPoint}'. Connection will be closed.");
@@ -150,7 +150,7 @@ namespace vtortola.WebSockets.Http
 
         public AsyncQueue<WebSocketNegotiationResult>.TakeResult DequeueAsync(CancellationToken cancel)
         {
-            return _negotiations.TakeAsync(cancel);
+            return _negotiations.DequeueAsync(cancel);
         }
 
         public void Dispose()
@@ -158,9 +158,9 @@ namespace vtortola.WebSockets.Http
             SafeEnd.Dispose(_semaphore, this.log);
 
             _cancel?.Cancel(throwOnFirstException: false);
-            foreach (var connection in this._connections.CloseAndReceiveAll(closeError: new OperationCanceledException()))
+            foreach (var connection in this._connections.TakeAllAndClose(closeError: new OperationCanceledException()))
                 SafeEnd.Dispose(connection, this.log);
-            foreach (var negotiation in this._negotiations.CloseAndReceiveAll(closeError: new OperationCanceledException()))
+            foreach (var negotiation in this._negotiations.TakeAllAndClose(closeError: new OperationCanceledException()))
                 SafeEnd.Dispose(negotiation.Result, this.log);
 
             SafeEnd.Dispose(this.pingQueue, this.log);

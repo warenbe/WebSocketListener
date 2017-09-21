@@ -313,7 +313,7 @@ namespace vtortola.WebSockets.UnitTests
             })().IgnoreFaultOrCancellation().ConfigureAwait(false);
 
             await Task.Delay(count);
-            asyncQueue.Close();
+            asyncQueue.ClearAndClose();
 
             await sendTask;
 
@@ -355,7 +355,7 @@ namespace vtortola.WebSockets.UnitTests
             })().IgnoreFaultOrCancellation().ConfigureAwait(false);
 
             await Task.Delay(count);
-            var actualSum = asyncQueue.CloseAndReceiveAll().Sum();
+            var actualSum = asyncQueue.TakeAllAndClose().Sum();
 
             await sendTask;
 
@@ -400,7 +400,7 @@ namespace vtortola.WebSockets.UnitTests
                 await receiveAsync.ConfigureAwait(false);
             });
 
-            asyncQueue.Close(new OperationCanceledException());
+            asyncQueue.ClearAndClose(new OperationCanceledException());
 
             if (await Task.WhenAny(timeout, recvTask).ConfigureAwait(false) == timeout)
                 throw new TimeoutException();
@@ -421,7 +421,7 @@ namespace vtortola.WebSockets.UnitTests
                 await receiveAsync.ConfigureAwait(false);
             });
 
-            asyncQueue.Close(new IOException());
+            asyncQueue.ClearAndClose(new IOException());
 
             if (await Task.WhenAny(timeout, recvTask).ConfigureAwait(false) == timeout)
                 throw new TimeoutException();
@@ -442,7 +442,7 @@ namespace vtortola.WebSockets.UnitTests
                 await receiveAsync.ConfigureAwait(false);
             });
 
-            var all = asyncQueue.CloseAndReceiveAll(closeError: new OperationCanceledException());
+            var all = asyncQueue.TakeAllAndClose(closeError: new OperationCanceledException());
 
             if (await Task.WhenAny(timeout, recvTask).ConfigureAwait(false) == timeout)
                 throw new TimeoutException();
@@ -473,7 +473,7 @@ namespace vtortola.WebSockets.UnitTests
 
             await Task.Delay(1).ConfigureAwait(false);
 
-            var itemsInAsyncQueue = asyncQueue.CloseAndReceiveAll(); // deny TryEnqueue
+            var itemsInAsyncQueue = asyncQueue.TakeAllAndClose(); // deny TryEnqueue
             cancellationSource.Cancel(); // stop parallel for
 
             await sendTask.IgnoreFaultOrCancellation().ConfigureAwait(false);
