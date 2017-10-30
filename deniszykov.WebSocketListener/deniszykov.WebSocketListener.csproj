@@ -16,8 +16,8 @@ https://github.com/deniszykov/WebSocketListener</Description>
 		<PackageTags>websockets HTML5 realtime streaming sockets server client async asynchronous</PackageTags>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>..\WebSocketListener.snk</AssemblyOriginatorKeyFile>
-		<AssemblyVersion>4.1.1.0</AssemblyVersion>
-		<FileVersion>4.1.1.0</FileVersion>
+		<AssemblyVersion>4.1.2.0</AssemblyVersion>
+		<FileVersion>4.1.2.0</FileVersion>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="..\WebSocketListener.snk" Link="WebSocketListener.snk" />
