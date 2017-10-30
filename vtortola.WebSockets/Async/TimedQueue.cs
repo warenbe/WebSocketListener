@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -80,31 +80,36 @@ namespace vtortola.WebSockets.Async
 
             // get queue head (current working time) and find tail(current working time + period)
             // and put/get subscription list from tail
-
-            var head = Interlocked.Read(ref this.queueHead);
-            var headIndex = GetHeadIndex(head);
-            var tailIndex = (headIndex + this.timeSlices + 1) % this.queue.Length;
-
-            var list = default(SubscriptionListT);
-            var spinWait = new SpinWait();
-            do
+            while (true)
             {
-                spinWait.SpinOnce();
+                var head = Interlocked.Read(ref this.queueHead);
+                var headIndex = GetHeadIndex(head);
+                var tailIndex = (headIndex + this.timeSlices + 1) % this.queue.Length;
 
-                list = Volatile.Read(ref this.queue[tailIndex]);
-                if (list != null)
-                    continue;
+                var spinWait = new SpinWait();
+                while (Interlocked.Read(ref this.queueHead) == head)
+                {
+                    var list = Volatile.Read(ref this.queue[tailIndex]);
+                    if (list != null)
+                    {
+                        return list;
+                    }
 
-                list = this.CreateSubscriptionList();
-                var currentList = Interlocked.CompareExchange(ref this.queue[tailIndex], list, null);
-                if (currentList == null)
-                    continue;
+                    list = this.CreateSubscriptionList();
+                    var currentList = Interlocked.CompareExchange(ref this.queue[tailIndex], list, null);
+                    if (currentList != null && ReferenceEquals(list, currentList) == false)
+                    {
+                        this.ReleaseSubscriptionList(list);
+                        return currentList;
+                    }
+                    else if (currentList == null)
+                    {
+                        return list;
+                    }
 
-                this.ReleaseSubscriptionList(list);
-                list = currentList;
-            } while (Interlocked.Read(ref this.queueHead) != head);
-
-            return list;
+                    spinWait.SpinOnce();
+                }
+            }
         }
 
         private void OnNotifySubscribers(object state)
