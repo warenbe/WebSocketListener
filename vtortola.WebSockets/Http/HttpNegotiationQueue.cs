@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -85,7 +85,12 @@ namespace vtortola.WebSockets.Http
                     var extTask = conExt.ExtendConnectionAsync(networkConnection);
                     await Task.WhenAny(timeoutTask, extTask).ConfigureAwait(false);
                     if (timeoutTask.IsCompleted)
+                    {
+#pragma warning disable 4014
+                        extTask.IgnoreFaultOrCancellation(); // make connection exception observed
+#pragma warning restore 4014
                         throw new WebSocketException($"Negotiation timeout (Extension: {conExt.GetType().Name})");
+                    }
 
                     networkConnection = await extTask.ConfigureAwait(false);
                 }
@@ -93,7 +98,12 @@ namespace vtortola.WebSockets.Http
                 var handshakeTask = _handShaker.HandshakeAsync(networkConnection);
                 await Task.WhenAny(timeoutTask, handshakeTask).ConfigureAwait(false);
                 if (timeoutTask.IsCompleted)
+                {
+#pragma warning disable 4014
+                    handshakeTask.IgnoreFaultOrCancellation(); // make connection exception observed
+#pragma warning restore 4014
                     throw new WebSocketException("Negotiation timeout");
+                }
 
                 var handshake = await handshakeTask.ConfigureAwait(false);
 

@@ -7,7 +7,7 @@
 https://github.com/deniszykov/WebSocketListener</Description>
 		<Company>deniszykov</Company>
 		<Product>deniszykov.WebSocketListener</Product>
-		<Version>4.1.2</Version>
+		<Version>4.1.3</Version>
 		<Authors>Valeriano Tortola, Denis Zykov</Authors>
 		<PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/deniszykov/WebSocketListener</PackageProjectUrl>
@@ -16,8 +16,39 @@ https://github.com/deniszykov/WebSocketListener</Description>
 		<PackageTags>websockets HTML5 realtime streaming sockets server client async asynchronous</PackageTags>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>..\WebSocketListener.snk</AssemblyOriginatorKeyFile>
-		<AssemblyVersion>4.1.2.0</AssemblyVersion>
-		<FileVersion>4.1.2.0</FileVersion>
+		<AssemblyVersion>4.1.3.0</AssemblyVersion>
+		<FileVersion>4.1.3.0</FileVersion>
+		<PackageReleaseNotes>v.4.1.3
+fixed unobserved exception at WebSocketSecureConnectionExtension.ExtendConnectionAsync
+
+v.4.1.2
+fixed infinite loop in timed queue (batch-ping related stuff)
+
+v.4.1.1
+fixed bug in BandwidthSaving ping strategy
+
+v.4.1.0
+[Feature] added request header to WebSocketClient.ConnectAsync signature
+[Performance] PingQueue list re-use
+Echo refactoring (perf. counters removed)
+JetBrains.Annotations is now internal
+
+v4.0.4
+fixed TimedQueue implementation (atomic Int64 reading for 32 bit systems)
+fixed Headers add NameValueCollection implementation to threat header values as not splitted headers
+removed AsyncResultTask and refactored BeginRead/BeginWrite on streams
+updated AsyncQueue implementation
+
+v.4.0.3
+added 'Connection:close' header to 'Bad Request' response of WebSocket handshaker
+fixed Unobserved exception because wrong implementation of TaskHelper.IgnoreFault.
+refactored TaskHelper.IgnoreFault and TaskHelper.PropagateResutTo to shortcut on Completed tasks
+fixed ping errors on WebSockets
+fixed TimedQueue impl
+Headers refactoring, added HeaderFlags parameter to headers
+refactored Socket shutdown sequence to prevent 'connection reset by peer' errors 
+
+UNIX Domain Sockets are tested on Linux</PackageReleaseNotes>
 	</PropertyGroup>
 	<ItemGroup>
 		<None Include="..\WebSocketListener.snk" Link="WebSocketListener.snk" />
