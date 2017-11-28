@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,8 +15,8 @@ namespace vtortola.WebSockets
 {
     internal class WebSocketHandshaker
     {
-        private static readonly Version HttpVersion11 = new Version(1,1);
-        private static readonly Version HttpVersion10 = new Version(1,0);
+        private static readonly Version HttpVersion11 = new Version(1, 1);
+        private static readonly Version HttpVersion10 = new Version(1, 0);
 
         private readonly ILogger log;
         private readonly WebSocketListenerOptions options;
@@ -206,7 +206,7 @@ namespace vtortola.WebSockets
 
             using (var sr = new StreamReader(clientStream.AsStream(), Encoding.ASCII, false, 1024, true))
             {
-                string line = sr.ReadLine();
+                var line = sr.ReadLine();
 
                 ParseGET(line, handshake);
 
@@ -220,10 +220,13 @@ namespace vtortola.WebSockets
         {
             if (handshake == null) throw new ArgumentNullException(nameof(handshake));
 
-            if (string.IsNullOrWhiteSpace(line) || !line.StartsWith("GET"))
-                throw new WebSocketException("Not GET request");
+            if (string.IsNullOrWhiteSpace(line))
+                throw new WebSocketException("Empty request line is received. Probably connection is closed.");
 
             var parts = line.Split(' ');
+            if (!line.StartsWith("GET", StringComparison.Ordinal))
+                throw new WebSocketException(string.Format("Invalid request method '{0}' while 'GET' is expected.", parts.FirstOrDefault() ?? line));
+
             handshake.Request.RequestUri = new Uri(parts[1], UriKind.Relative);
             string version = parts[2];
             handshake.Request.HttpVersion = version.EndsWith("1.1") ? HttpVersion11 : HttpVersion10;

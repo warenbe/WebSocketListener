@@ -1,5 +1,7 @@
-﻿using System;
+using System;
 using System.Diagnostics;
+using System.IO;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using log4net.Config;
@@ -50,7 +52,10 @@ namespace WebSocketListenerTests.Echo
                 tcp.SendBufferSize = bufferSize;
             });
 
-            
+            // adding the WSS extension
+            //var certificate = new X509Certificate2(File.ReadAllBytes("<PATH-TO-CERTIFICATE>"), "<PASSWORD>");
+           // options.ConnectionExtensions.RegisterSecureConnection(certificate);
+
             var listenEndPoints = new Uri[] {
                 new Uri("ws://localhost") // will listen both IPv4 and IPv6
             };
