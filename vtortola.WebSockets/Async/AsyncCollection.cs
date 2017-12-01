@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -17,11 +17,15 @@ namespace vtortola.WebSockets.Async
         private static readonly ItemT[] EmptyList = new ItemT[0];
 
         public const int UNBOUND = int.MaxValue;
+        public const string DEFAULT_PARALLEL_TAKE_ERROR_MESSAGE = "Parallel 'TakeAsync' is not allowed.";
+        public const string DEFAULT_CLOSED_ERROR_MESSAGE = "Collection is closed and can't accept or give new items.";
 
         // ReSharper disable StaticMemberInGenericType
-        private static readonly Lazy<ExceptionDispatchInfo> DefaultCloseError;
         private static readonly Lazy<ExceptionDispatchInfo> DefaultCanceledError;
         // ReSharper restore StaticMemberInGenericType
+
+        public string ParallelTakeErrorMessage = DEFAULT_PARALLEL_TAKE_ERROR_MESSAGE;
+        public string ClosedErrorMessage = DEFAULT_CLOSED_ERROR_MESSAGE;
 
         private readonly CollectionT innerCollection;
         private readonly Func<CollectionT, bool> emptyCheck;
@@ -43,18 +47,6 @@ namespace vtortola.WebSockets.Async
 
         static AsyncCollection()
         {
-            DefaultCloseError = new Lazy<ExceptionDispatchInfo>(() =>
-            {
-                try
-                {
-                    throw new InvalidOperationException("Connection is closed and can't accept or give new items.");
-                }
-                catch (InvalidOperationException closeError)
-                {
-                    return ExceptionDispatchInfo.Capture(closeError);
-                }
-            }, LazyThreadSafetyMode.ExecutionAndPublication);
-
             DefaultCanceledError = new Lazy<ExceptionDispatchInfo>(() =>
             {
                 try
@@ -86,7 +78,7 @@ namespace vtortola.WebSockets.Async
             if (Interlocked.CompareExchange(ref this.takeResult, newDequeueAsync, null) != null)
             {
                 newDequeueAsync.UnsubscribeCancellation();
-                throw new InvalidOperationException($"Parallel {nameof(this.TakeAsync)} is not allowed.");
+                throw new InvalidOperationException(this.ParallelTakeErrorMessage ?? DEFAULT_PARALLEL_TAKE_ERROR_MESSAGE);
             }
 
             return newDequeueAsync;
@@ -139,7 +131,7 @@ namespace vtortola.WebSockets.Async
 
         public void ClearAndClose(Exception closeError = null)
         {
-            var closeErrorDispatchInfo = closeError != null ? ExceptionDispatchInfo.Capture(closeError) : DefaultCloseError.Value;
+            var closeErrorDispatchInfo = this.GetCloseErrorDispatchInfo(closeError);
             if (Interlocked.CompareExchange(ref this.closeError, closeErrorDispatchInfo, null) != null)
                 return;
 
@@ -147,7 +139,7 @@ namespace vtortola.WebSockets.Async
         }
         public IReadOnlyList<ItemT> TakeAllAndClose(Exception closeError = null)
         {
-            var closeErrorDispatchInfo = closeError != null ? ExceptionDispatchInfo.Capture(closeError) : DefaultCloseError.Value;
+            var closeErrorDispatchInfo = this.GetCloseErrorDispatchInfo(closeError);
             if (Interlocked.CompareExchange(ref this.closeError, closeErrorDispatchInfo, null) != null)
                 return EmptyList;
 
@@ -167,6 +159,28 @@ namespace vtortola.WebSockets.Async
             this.takeResult?.CheckForCompletion();
 
             return (IReadOnlyList<ItemT>)resultList ?? EmptyList;
+        }
+
+        private ExceptionDispatchInfo GetCloseErrorDispatchInfo(Exception closeError)
+        {
+            var closeErrorDispatchInfo = default(ExceptionDispatchInfo);
+            if (closeError != null)
+            {
+                closeErrorDispatchInfo = ExceptionDispatchInfo.Capture(closeError);
+            }
+            else
+            {
+                try
+                {
+                    throw new InvalidOperationException(this.ClosedErrorMessage ?? DEFAULT_CLOSED_ERROR_MESSAGE);
+                }
+                catch (InvalidOperationException error)
+                {
+                    closeErrorDispatchInfo = ExceptionDispatchInfo.Capture(error);
+                }
+            }
+
+            return closeErrorDispatchInfo;
         }
 
         /// <inheritdoc />

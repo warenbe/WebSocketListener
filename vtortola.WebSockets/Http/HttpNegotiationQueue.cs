@@ -35,6 +35,8 @@ namespace vtortola.WebSockets.Http
 
             _connections = new AsyncQueue<NetworkConnection>(options.NegotiationQueueCapacity);
             _negotiations = new AsyncQueue<WebSocketNegotiationResult>();
+            _negotiations.ParallelTakeErrorMessage = $"Parallel call to '{nameof(WebSocketListener.AcceptWebSocketAsync)}' is not allowed.";
+            _negotiations.ClosedErrorMessage = $"{nameof(WebSocketListener)} is closed and will not accept new connections.";
 
             //_cancel.Token.Register(() => this._connections.Close(new OperationCanceledException()));
 
@@ -170,7 +172,7 @@ namespace vtortola.WebSockets.Http
             _cancel?.Cancel(throwOnFirstException: false);
             foreach (var connection in this._connections.TakeAllAndClose(closeError: new OperationCanceledException()))
                 SafeEnd.Dispose(connection, this.log);
-            foreach (var negotiation in this._negotiations.TakeAllAndClose(closeError: new OperationCanceledException()))
+            foreach (var negotiation in this._negotiations.TakeAllAndClose())
                 SafeEnd.Dispose(negotiation.Result, this.log);
 
             SafeEnd.Dispose(this.pingQueue, this.log);
