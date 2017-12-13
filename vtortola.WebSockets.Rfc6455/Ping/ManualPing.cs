@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -32,6 +32,9 @@ namespace vtortola.WebSockets.Rfc6455
 
             public override async Task PingAsync()
             {
+                if (this._connection.IsClosed)
+                    return;
+
                 if (this._lastPong.Elapsed > this._pingTimeout)
                 {
                     await this._connection.CloseAsync(WebSocketCloseReasons.GoingAway).ConfigureAwait(false);

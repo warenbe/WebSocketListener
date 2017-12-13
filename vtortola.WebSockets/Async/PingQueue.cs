@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -43,6 +43,9 @@ namespace vtortola.WebSockets.Async
                 }
                 catch (Exception pingError)
                 {
+                    if (webSocket.IsConnected == false)
+                        return;
+
                     if (pingError is ObjectDisposedException == false && pingError is ThreadAbortException == false)
                         DebugLogger.Instance.Warning("An error occurred while sending ping.", pingError);
                 }
