@@ -138,7 +138,7 @@ namespace vtortola.WebSockets.Tools
             if (length == 0)
                 return;
 
-            while (char.IsWhiteSpace(value[startIndex]) && length > 0)
+            while (length > 0 && char.IsWhiteSpace(value[startIndex]))
             {
                 startIndex++;
                 length--;
@@ -146,7 +146,7 @@ namespace vtortola.WebSockets.Tools
 
             if (length == 0) return;
             var end = startIndex + length - 1;
-            while (char.IsWhiteSpace(value[end]) && length > 0)
+            while (length > 0 && char.IsWhiteSpace(value[end]))
             {
                 end--;
                 length--;
