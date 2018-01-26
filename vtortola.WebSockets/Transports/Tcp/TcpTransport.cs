@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -24,6 +24,9 @@ namespace vtortola.WebSockets.Transports.Tcp
         public const int DEFAULT_RECEIVE_TIMEOUT_MS = 5000;
         public const bool DEFAULT_NO_DELAY = false;
         public const bool DEFAULT_IS_ASYNC = true;
+#if !NETSTANDARD && !UAP
+        public const IPProtectionLevel DEFAULT_IP_PROTECTION_LEVEL = IPProtectionLevel.Unspecified;
+#endif
 
         private static readonly string[] SupportedSchemes = { "tcp", "ws", "wss" };
 
@@ -34,6 +37,7 @@ namespace vtortola.WebSockets.Transports.Tcp
         public int SendBufferSize { get; set; } = DEFAULT_SEND_BUFFER_SIZE;
         public TimeSpan SendTimeout { get; set; } = TimeSpan.FromMilliseconds(DEFAULT_SEND_TIMEOUT_MS);
 #if !NETSTANDARD && !UAP
+        public IPProtectionLevel IpProtectionLevel { get; set; } = DEFAULT_IP_PROTECTION_LEVEL;
         public bool IsAsync { get; set; } = DEFAULT_IS_ASYNC;
 #endif
 
@@ -108,6 +112,8 @@ namespace vtortola.WebSockets.Transports.Tcp
             socket.SendBufferSize = this.SendBufferSize;
             socket.SendTimeout = (int)this.SendTimeout.TotalMilliseconds + 1;
 #if !NETSTANDARD && !UAP
+            if (this.IpProtectionLevel != IPProtectionLevel.Unspecified)
+                socket.SetIPProtectionLevel(this.IpProtectionLevel);
             socket.UseOnlyOverlappedIO = this.IsAsync;
 #endif
         }

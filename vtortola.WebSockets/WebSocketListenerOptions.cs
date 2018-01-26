@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Net.Security;
+using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Threading;
 using vtortola.WebSockets.Transports;
@@ -70,8 +71,8 @@ namespace vtortola.WebSockets
             if (this.NegotiationTimeout == TimeSpan.Zero)
                 this.NegotiationTimeout = Timeout.InfiniteTimeSpan;
 
-            if (this.SendBufferSize < 512)
-                throw new WebSocketException($"{nameof(this.SendBufferSize)} must be bigger than 512.");
+            if (this.SendBufferSize < 1024)
+                throw new WebSocketException($"{nameof(this.SendBufferSize)} must be bigger than 1024.");
 
             if (this.BufferManager != null && this.SendBufferSize < this.BufferManager.LargeBufferSize)
                 throw new WebSocketException($"{this.BufferManager}.{this.BufferManager.LargeBufferSize} must be bigger or equals to {nameof(this.SendBufferSize)}.");

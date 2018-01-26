@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -37,6 +37,8 @@ namespace vtortola.WebSockets.Transports.Tcp
             socket.SendBufferSize = this.transport.SendBufferSize;
             socket.SendTimeout = (int)this.transport.SendTimeout.TotalMilliseconds + 1;
 #if !NETSTANDARD && !UAP
+            if (this.transport.IpProtectionLevel != IPProtectionLevel.Unspecified)
+                socket.SetIPProtectionLevel(this.transport.IpProtectionLevel);
             socket.UseOnlyOverlappedIO = this.transport.IsAsync;
 #endif
             return new TcpConnection(socket);
