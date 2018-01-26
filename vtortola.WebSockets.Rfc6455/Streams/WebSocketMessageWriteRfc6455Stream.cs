@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using vtortola.WebSockets.Tools;
@@ -24,27 +24,27 @@ namespace vtortola.WebSockets.Rfc6455
         {
             if (webSocket == null) throw new ArgumentNullException(nameof(webSocket));
 
-            _internalUsedBufferLength = 0;
-            _messageType = messageType;
-            _webSocket = webSocket;
+            this._internalUsedBufferLength = 0;
+            this._messageType = messageType;
+            this._webSocket = webSocket;
         }
         public WebSocketMessageWriteRfc6455Stream(WebSocketRfc6455 webSocket, WebSocketMessageType messageType, WebSocketExtensionFlags extensionFlags)
             : this(webSocket, messageType)
         {
-            ExtensionFlags.Rsv1 = extensionFlags.Rsv1;
-            ExtensionFlags.Rsv2 = extensionFlags.Rsv2;
-            ExtensionFlags.Rsv3 = extensionFlags.Rsv3;
+            this.ExtensionFlags.Rsv1 = extensionFlags.Rsv1;
+            this.ExtensionFlags.Rsv2 = extensionFlags.Rsv2;
+            this.ExtensionFlags.Rsv3 = extensionFlags.Rsv3;
         }
 
         private void BufferData(byte[] buffer, ref int offset, ref int count)
         {
             if (buffer == null) throw new ArgumentNullException(nameof(buffer));
 
-            var read = Math.Min(count, _webSocket.Connection.SendBuffer.Count - _internalUsedBufferLength);
+            var read = Math.Min(count, this._webSocket.Connection.SendBuffer.Count - this._internalUsedBufferLength);
             if (read == 0)
                 return;
-            Array.Copy(buffer, offset, _webSocket.Connection.SendBuffer.Array, _webSocket.Connection.SendBuffer.Offset + _internalUsedBufferLength, read);
-            _internalUsedBufferLength += read;
+            Array.Copy(buffer, offset, this._webSocket.Connection.SendBuffer.Array, this._webSocket.Connection.SendBuffer.Offset + this._internalUsedBufferLength, read);
+            this._internalUsedBufferLength += read;
             offset += read;
             count -= read;
         }
@@ -59,14 +59,14 @@ namespace vtortola.WebSockets.Rfc6455
 
             while (count > 0)
             {
-                BufferData(buffer, ref offset, ref count);
+                this.BufferData(buffer, ref offset, ref count);
 
-                if (_internalUsedBufferLength == _webSocket.Connection.SendBuffer.Count && count > 0)
+                if (this._internalUsedBufferLength == this._webSocket.Connection.SendBuffer.Count && count > 0)
                 {
-                    var dataFrame = _webSocket.Connection.PrepareFrame(_webSocket.Connection.SendBuffer, _internalUsedBufferLength, false, _isHeaderSent, _messageType, ExtensionFlags);
-                    await _webSocket.Connection.SendFrameAsync(dataFrame, cancellationToken).ConfigureAwait(false);
-                    _internalUsedBufferLength = 0;
-                    _isHeaderSent = true;
+                    var dataFrame = this._webSocket.Connection.PrepareFrame(this._webSocket.Connection.SendBuffer, this._internalUsedBufferLength, false, this._isHeaderSent, this._messageType, this.ExtensionFlags);
+                    await this._webSocket.Connection.SendFrameAsync(dataFrame, cancellationToken).ConfigureAwait(false);
+                    this._internalUsedBufferLength = 0;
+                    this._isHeaderSent = true;
                 }
             }
         }
@@ -97,29 +97,36 @@ namespace vtortola.WebSockets.Rfc6455
             if (Interlocked.CompareExchange(ref this.state, STATE_CLOSED, STATE_OPEN) != STATE_OPEN)
                 return TaskHelper.CompletedTask;
 
-            var dataFrame = this._webSocket.Connection.PrepareFrame(this._webSocket.Connection.SendBuffer, this._internalUsedBufferLength, true,
-                this._isHeaderSent, this._messageType, this.ExtensionFlags);
-            return this._webSocket.Connection.SendFrameAsync(dataFrame, CancellationToken.None).ContinueWith(
+            var dataFrame = this._webSocket.Connection.PrepareFrame(this._webSocket.Connection.SendBuffer, this._internalUsedBufferLength, true, this._isHeaderSent, this._messageType, this.ExtensionFlags);
+            var sendFrameTask = this._webSocket.Connection.SendFrameAsync(dataFrame, CancellationToken.None);
+
+            sendFrameTask.ContinueWith(
                 (sendTask, s) => ((WebSocketConnectionRfc6455)s).EndWriting(),
                 this._webSocket.Connection,
                 CancellationToken.None,
                 TaskContinuationOptions.ExecuteSynchronously,
                 TaskScheduler.Default);
+
+            return sendFrameTask;
         }
 
         protected override void Dispose(bool disposing)
         {
             // don't do flush on close if connection is broken
-            if (this._webSocket.Connection.IsConnected) 
+            if (this._webSocket.Connection.IsConnected)
             {
                 var closeTask = this.CloseAsync();
                 if (closeTask.IsCompleted == false && this._webSocket.Connection.Log.IsWarningEnabled)
+                {
                     this._webSocket.Connection.Log.Warning(
                         $"Invoking asynchronous operation '{nameof(this.CloseAsync)}()' from synchronous method '{nameof(Dispose)}(bool {nameof(disposing)})'. " +
                         $"Call and await {nameof(this.CloseAsync)}() before disposing stream.");
+                }
 
                 if (closeTask.Status != TaskStatus.RanToCompletion)
-                    closeTask.Wait();
+                {
+                    closeTask.Wait(); // make exception observed
+                }
             }
             Interlocked.Exchange(ref this.state, STATE_DISPOSED);
         }

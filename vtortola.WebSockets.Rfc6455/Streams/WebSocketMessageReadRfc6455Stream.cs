@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using vtortola.WebSockets.Tools;
@@ -51,6 +51,7 @@ namespace vtortola.WebSockets.Rfc6455
                 return 0;
 
             var read = 0;
+            var totalRead = 0;
             do
             {
                 if (!_webSocket.IsConnected || cancellationToken.IsCancellationRequested)
@@ -72,15 +73,16 @@ namespace vtortola.WebSockets.Rfc6455
 
                     offset += read;
                     count -= read;
+                    totalRead += read;
 
                     _webSocket.Connection.DisposeCurrentHeaderIfFinished();
 
                     if (_webSocket.Connection.CurrentHeader == null && _hasPendingFrames)
                         await LoadNewHeaderAsync(cancellationToken).ConfigureAwait(false);
                 }
-            } while (read == 0 && _webSocket.Connection.CurrentHeader.RemainingBytes != 0 && count > 0);
-
-            return read;
+            } while (read == 0 && _webSocket.Connection.CurrentHeader.RemainingBytes > 0 && count > 0);
+            
+            return totalRead;
         }
 
         private int GetBytesToRead(WebSocketFrameHeader header, int bufferSize)
