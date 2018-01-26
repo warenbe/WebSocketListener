@@ -18,7 +18,7 @@ namespace vtortola.WebSockets.Rfc6455
         private const int CLOSE_STATE_DISPOSED = 2;
 
         //    readonly Byte[] _buffer;
-        private readonly ArraySegment<byte> headerBuffer, pingBuffer, pongBuffer, keyBuffer, maskBuffer, closeBuffer;
+        private readonly ArraySegment<byte> headerBuffer, outPingBuffer, outPongBuffer, inPingBuffer, inPongBuffer, closeBuffer;
         internal readonly ArraySegment<byte> SendBuffer;
 
         private readonly ILogger log;
@@ -50,13 +50,10 @@ namespace vtortola.WebSockets.Rfc6455
             if (options == null) throw new ArgumentNullException(nameof(options));
 
             const int HEADER_SEGMENT_SIZE = 16;
-            const int CONTROL_SEGMENT_SIZE = 128;
             const int PONG_SEGMENT_SIZE = 128;
             const int PING_HEADER_SEGMENT_SIZE = 16;
             const int PING_SEGMENT_SIZE = 128;
             const int SEND_HEADER_SEGMENT_SIZE = 16;
-            const int KEY_SEGMENT_SIZE = 4;
-            const int MASK_SEGMENT_SIZE = 4;
             const int CLOSE_SEGMENT_SIZE = 2;
 
             this.log = options.Logger;
@@ -68,26 +65,22 @@ namespace vtortola.WebSockets.Rfc6455
             this.maskData = maskData;
 
             var bufferSize = HEADER_SEGMENT_SIZE +
-                CONTROL_SEGMENT_SIZE +
-                PONG_SEGMENT_SIZE +
-                PING_HEADER_SEGMENT_SIZE +
-                PING_SEGMENT_SIZE +
-                KEY_SEGMENT_SIZE +
-                MASK_SEGMENT_SIZE +
+                PING_HEADER_SEGMENT_SIZE + PONG_SEGMENT_SIZE +
+                PING_HEADER_SEGMENT_SIZE + PING_SEGMENT_SIZE +
+                PING_HEADER_SEGMENT_SIZE + PONG_SEGMENT_SIZE +
+                PING_HEADER_SEGMENT_SIZE + PING_SEGMENT_SIZE +
                 CLOSE_SEGMENT_SIZE;
 
             var smallBuffer = this.options.BufferManager.TakeBuffer(bufferSize);
             this.headerBuffer = new ArraySegment<byte>(smallBuffer, 0, HEADER_SEGMENT_SIZE);
-            this.pongBuffer = this.headerBuffer.NextSegment(CONTROL_SEGMENT_SIZE).NextSegment(PONG_SEGMENT_SIZE);
-            this.pingBuffer = this.pongBuffer.NextSegment(PING_HEADER_SEGMENT_SIZE).NextSegment(PING_SEGMENT_SIZE);
-            this.keyBuffer = this.pingBuffer.NextSegment(KEY_SEGMENT_SIZE);
-            this.maskBuffer = this.keyBuffer.NextSegment(MASK_SEGMENT_SIZE);
-            this.closeBuffer = this.maskBuffer.NextSegment(CLOSE_SEGMENT_SIZE);
-
+            this.outPongBuffer = this.headerBuffer.NextSegment(PING_HEADER_SEGMENT_SIZE).NextSegment(PONG_SEGMENT_SIZE);
+            this.outPingBuffer = this.outPongBuffer.NextSegment(PING_HEADER_SEGMENT_SIZE).NextSegment(PING_SEGMENT_SIZE);
+            this.inPongBuffer = this.outPingBuffer.NextSegment(PING_HEADER_SEGMENT_SIZE).NextSegment(PONG_SEGMENT_SIZE);
+            this.inPingBuffer = this.inPongBuffer.NextSegment(PING_HEADER_SEGMENT_SIZE).NextSegment(PING_SEGMENT_SIZE);
+            this.closeBuffer = this.inPingBuffer.NextSegment(CLOSE_SEGMENT_SIZE);
 
             var sendBuffer = this.options.BufferManager.TakeBuffer(this.options.SendBufferSize);
-            this.SendBuffer = new ArraySegment<byte>(sendBuffer, 0, SEND_HEADER_SEGMENT_SIZE)
-                .NextSegment(this.options.SendBufferSize - SEND_HEADER_SEGMENT_SIZE);
+            this.SendBuffer = new ArraySegment<byte>(sendBuffer, SEND_HEADER_SEGMENT_SIZE, sendBuffer.Length - SEND_HEADER_SEGMENT_SIZE);
 
             switch (options.PingMode)
             {
@@ -171,8 +164,15 @@ namespace vtortola.WebSockets.Rfc6455
         }
         public void DisposeCurrentHeaderIfFinished()
         {
+            if (this.CurrentHeader != null && this.CurrentHeader.RemainingBytes < 0)
+            {
+                throw new InvalidOperationException("Extra bytes are read from transport connection. Report to package developer about it.");
+            }
+
             if (this.CurrentHeader != null && this.CurrentHeader.RemainingBytes == 0)
+            {
                 this.CurrentHeader = null;
+            }
         }
         public async Task<int> ReceiveAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
@@ -214,12 +214,12 @@ namespace vtortola.WebSockets.Rfc6455
 
         public ArraySegment<byte> PrepareFrame(ArraySegment<byte> payload, int length, bool isCompleted, bool headerSent, WebSocketMessageType type, WebSocketExtensionFlags extensionFlags)
         {
-            var mask = default(ArraySegment<byte>);
+            var mask = 0U;
             if (this.maskData)
-                ThreadStaticRandom.NextBytes(mask = this.maskBuffer);
+                mask = unchecked((uint)ThreadStaticRandom.NextNotZero());
 
             var header = WebSocketFrameHeader.Create(length, isCompleted, headerSent, mask, (WebSocketFrameOption)type, extensionFlags);
-            if (header.ToBytes(payload.Array, payload.Offset - header.HeaderLength) != header.HeaderLength)
+            if (header.WriteTo(payload.Array, payload.Offset - header.HeaderLength) != header.HeaderLength)
                 throw new WebSocketException("Wrong frame header written.");
 
             if (this.log.IsDebugEnabled)
@@ -300,7 +300,7 @@ namespace vtortola.WebSockets.Rfc6455
                 return;
             }
 
-            int headerLength = WebSocketFrameHeader.GetHeaderLength(this.headerBuffer.Array, this.headerBuffer.Offset);
+            var headerLength = WebSocketFrameHeader.GetHeaderLength(this.headerBuffer.Array, this.headerBuffer.Offset);
 
             if (read != headerLength)
             {
@@ -312,7 +312,7 @@ namespace vtortola.WebSockets.Rfc6455
             }
 
             WebSocketFrameHeader header;
-            if (!WebSocketFrameHeader.TryParse(this.headerBuffer.Array, this.headerBuffer.Offset, headerLength, this.keyBuffer, out header))
+            if (!WebSocketFrameHeader.TryParse(this.headerBuffer.Array, this.headerBuffer.Offset, headerLength, out header))
                 throw new WebSocketException("Frame header is malformed.");
 
             if (this.log.IsDebugEnabled)
@@ -354,22 +354,26 @@ namespace vtortola.WebSockets.Rfc6455
 
                 case WebSocketFrameOption.Ping:
                 case WebSocketFrameOption.Pong:
-                    var contentLength = this.pongBuffer.Count;
+                    var contentLength = this.inPongBuffer.Count;
                     if (this.CurrentHeader.ContentLength < 125)
                         contentLength = (int)this.CurrentHeader.ContentLength;
 
+                    var isPong = this.CurrentHeader.Flags.Option == WebSocketFrameOption.Pong;
+                    var buffer = isPong ? this.inPongBuffer : this.inPingBuffer;
                     var read = 0;
-                    while (this.CurrentHeader.RemainingBytes > 0)
+                    var totalRead = 0;
+                    while (totalRead < contentLength)
                     {
-                        read = await this.networkConnection.ReadAsync(this.pongBuffer.Array, this.pongBuffer.Offset + read, contentLength - read, CancellationToken.None).ConfigureAwait(false);
-                        this.CurrentHeader.DecodeBytes(this.pongBuffer.Array, this.pongBuffer.Offset, read);
+                        read = await this.networkConnection.ReadAsync(buffer.Array, buffer.Offset + read, contentLength - read, CancellationToken.None).ConfigureAwait(false);
+                        totalRead += read;
                     }
+                    this.CurrentHeader.DecodeBytes(buffer.Array, buffer.Offset, contentLength);
 
-                    if (this.CurrentHeader.Flags.Option == WebSocketFrameOption.Pong)
+                    if (isPong)
                     {
                         try
                         {
-                            this.pingHandler.NotifyPong(this.pongBuffer);
+                            this.pingHandler.NotifyPong(buffer);
                         }
                         catch (Exception notifyPong)
                         {
@@ -379,7 +383,9 @@ namespace vtortola.WebSockets.Rfc6455
                     }
                     else // pong frames echo what was 'pinged'
                     {
-                        var frame = this.PrepareFrame(this.pongBuffer, read, true, false, (WebSocketMessageType)WebSocketFrameOption.Pong, WebSocketExtensionFlags.None);
+                        Buffer.BlockCopy(buffer.Array, buffer.Offset, this.outPongBuffer.Array, this.outPongBuffer.Offset, totalRead);
+
+                        var frame = this.PrepareFrame(this.outPongBuffer, totalRead, true, false, (WebSocketMessageType)WebSocketFrameOption.Pong, WebSocketExtensionFlags.None);
                         await this.SendFrameAsync(frame, Timeout.InfiniteTimeSpan, SendOptions.NoErrors, CancellationToken.None).ConfigureAwait(false);
                     }
 
@@ -432,12 +438,12 @@ namespace vtortola.WebSockets.Rfc6455
                     if (offset < 0 || offset > data.Length) throw new ArgumentOutOfRangeException(nameof(offset));
                     if (count < 0 || count > 125 || offset + count > data.Length) throw new ArgumentOutOfRangeException(nameof(count));
 
-                    this.pingBuffer.Array[this.pingBuffer.Offset] = (byte)count;
-                    Buffer.BlockCopy(data, offset, this.pingBuffer.Array, this.pingBuffer.Offset + 1, count);
+                    this.outPingBuffer.Array[this.outPingBuffer.Offset] = (byte)count;
+                    Buffer.BlockCopy(data, offset, this.outPingBuffer.Array, this.outPingBuffer.Offset + 1, count);
                 }
                 else
                 {
-                    this.pingBuffer.Array[this.pingBuffer.Offset] = 0;
+                    this.outPingBuffer.Array[this.outPingBuffer.Offset] = 0;
                 }
             }
 

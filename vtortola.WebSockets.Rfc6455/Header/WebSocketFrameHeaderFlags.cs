@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using vtortola.WebSockets.Tools;
 
 namespace vtortola.WebSockets.Rfc6455
@@ -45,7 +45,7 @@ namespace vtortola.WebSockets.Rfc6455
             if (buffer == null || buffer.Length - offset < 2)
                 return false;
 
-            var optionByte = buffer[0];
+            var optionByte = buffer[offset];
             SetBit(ref optionByte, 7, false);
             SetBit(ref optionByte, 6, false);
             SetBit(ref optionByte, 5, false);
@@ -56,7 +56,7 @@ namespace vtortola.WebSockets.Rfc6455
             if (EnumHelper<WebSocketFrameOption>.IsDefined(options) == false)
                 return false;
 
-            headerFlags = new WebSocketFrameHeaderFlags(buffer[0], buffer[1], options);
+            headerFlags = new WebSocketFrameHeaderFlags(buffer[offset], buffer[offset + 1], options);
 
             if (options > WebSocketFrameOption.Binary)
                 headerFlags.FIN = true; // control frames is always final
@@ -104,17 +104,17 @@ namespace vtortola.WebSockets.Rfc6455
                     break;
             }
         }
-        public void ToBytes(long length, byte[] buffer, int offset)
+        public void ToBytes(long payloadLength, byte[] buffer, int offset)
         {
             int headerLength;
-            if (length <= 125)
-                headerLength = (int)length;
-            else if (length <= ushort.MaxValue)
+            if (payloadLength <= 125)
+                headerLength = (int)payloadLength;
+            else if (payloadLength <= ushort.MaxValue)
                 headerLength = 126;
-            else if ((ulong)length < ulong.MaxValue)
+            else if ((ulong)payloadLength < ulong.MaxValue)
                 headerLength = 127;
             else
-                throw new WebSocketException("Cannot create a header with a length of " + length);
+                throw new WebSocketException("Cannot create a header with a length of " + payloadLength);
 
             buffer[offset] = _byte1;
             buffer[offset + 1] = (byte)(_byte2 + headerLength);

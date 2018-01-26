@@ -1,10 +1,11 @@
-﻿using System;
+using System;
+using System.Diagnostics;
 
 namespace vtortola.WebSockets.Rfc6455
 {
     internal sealed class WebSocketFrameHeader
     {
-        private readonly ArraySegment<byte> _key;
+        public uint MaskKey;
         private int cursor;
 
         public long ContentLength { get; private set; }
@@ -12,14 +13,9 @@ namespace vtortola.WebSockets.Rfc6455
         public WebSocketFrameHeaderFlags Flags { get; private set; }
         public long RemainingBytes { get; private set; }
 
-        private WebSocketFrameHeader(ArraySegment<byte> keySegment)
-        {
-            _key = keySegment;
-        }
-
         public void DecodeBytes(byte[] buffer, int offset, int count)
         {
-            EncodeBytes(buffer, offset, count);
+            this.EncodeBytes(buffer, offset, count);
         }
         public void EncodeBytes(byte[] buffer, int offset, int count)
         {
@@ -27,22 +23,16 @@ namespace vtortola.WebSockets.Rfc6455
 
             if (!this.Flags.MASK) return;
 
-            var mask = this._key.Array;
-            var maskOffset = this._key.Offset;
-            var maskIndex = this.cursor;
-            var end = offset + count;
-            for (var i = offset; i < end; i++)
-            {
-                var maskByte = mask[maskOffset + (maskIndex % 4)];
-                maskIndex++;
-                buffer[i] = (byte)(buffer[i] ^ maskByte);
-            }
-            this.cursor = maskIndex % 4;
+            MaskPayload(buffer, offset, count, this.MaskKey, this.cursor);
+            this.cursor += count;
         }
 
-        public int ToBytes(byte[] segment, int offset)
+        public int WriteTo(byte[] buffer, int offset)
         {
-            this.Flags.ToBytes(this.ContentLength, segment, offset);
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+            if (offset < 0 || offset >= buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
+
+            this.Flags.ToBytes(this.ContentLength, buffer, offset);
             var written = 2;
             if (this.ContentLength <= 125)
             {
@@ -50,19 +40,19 @@ namespace vtortola.WebSockets.Rfc6455
             }
             else if (this.ContentLength <= ushort.MaxValue)
             {
-                ((ushort)this.ContentLength).ToBytesBackwards(segment, offset + written);
+                ((ushort)this.ContentLength).ToBytesBackwards(buffer, offset + written);
                 written += 2;
             }
             else
             {
-                ((ulong)this.ContentLength).ToBytesBackwards(segment, offset + written);
+                ((ulong)this.ContentLength).ToBytesBackwards(buffer, offset + written);
                 written += 8;
             }
             // write mask is it is masked message
             if (this.Flags.MASK)
             {
-                Buffer.BlockCopy(_key.Array, _key.Offset, segment, offset + written, _key.Count);
-                written += _key.Count;
+               this.MaskKey.ToBytes(buffer, offset + written);
+               written += 4;
             }
             return written;
         }
@@ -85,20 +75,18 @@ namespace vtortola.WebSockets.Rfc6455
             else
                 throw new WebSocketException("Cannot understand a length field of " + contentLength);
         }
-        public static bool TryParse(byte[] frameStart, int offset, int headerLength, ArraySegment<byte> keySegment, out WebSocketFrameHeader header)
+        public static bool TryParse(byte[] frameStart, int offset, int headerLength, out WebSocketFrameHeader header)
         {
             if (frameStart == null) throw new ArgumentNullException(nameof(frameStart));
 
-            if (keySegment.Count != 4)
-                throw new WebSocketException("The frame key must have a length of 4");
-
             header = null;
 
-            if (frameStart == null || frameStart.Length < 6 || frameStart.Length < (offset + headerLength))
+            var availableLength = frameStart.Length - offset;
+            if (availableLength < 6 || availableLength < headerLength)
                 return false;
 
-            int value = frameStart[offset + 1];
-            long contentLength = value >= 128 ? value - 128 : value;
+            var value = frameStart[offset + 1];
+            var contentLength = (long)(value >= 128 ? value - 128 : value);
 
             if (contentLength <= 125)
             {
@@ -106,22 +94,22 @@ namespace vtortola.WebSockets.Rfc6455
             }
             else if (contentLength == 126)
             {
-                if (frameStart.Length < headerLength)
+                if (availableLength < headerLength)
                     return false;
 
                 if (BitConverter.IsLittleEndian)
                     frameStart.ReversePortion(offset + 2, 2);
-                contentLength = BitConverter.ToUInt16(frameStart, 2);
+                contentLength = BitConverter.ToUInt16(frameStart, offset + 2);
             }
             else if (contentLength == 127)
             {
-                if (frameStart.Length < headerLength)
+                if (availableLength < headerLength)
                     return false;
 
                 if (BitConverter.IsLittleEndian)
                     frameStart.ReversePortion(offset + 2, 8);
 
-                ulong length = BitConverter.ToUInt64(frameStart, 2);
+                var length = BitConverter.ToUInt64(frameStart, offset + 2);
                 if (length > long.MaxValue)
                 {
                     throw new WebSocketException("The maximum supported frame length is 9223372036854775807, current frame is " + length.ToString());
@@ -134,33 +122,36 @@ namespace vtortola.WebSockets.Rfc6455
 
             WebSocketFrameHeaderFlags flags;
             if (!WebSocketFrameHeaderFlags.TryParse(frameStart, offset, out flags))
+            {
                 return false;
+            }
 
-            header = new WebSocketFrameHeader(keySegment)
+            var maskKey = 0U;
+            if (flags.MASK)
+            {
+                headerLength -= 4;
+                if (BitConverter.IsLittleEndian == false)
+                    Array.Reverse(frameStart, offset + headerLength, 4);
+
+                maskKey = BitConverter.ToUInt32(frameStart, offset + headerLength);
+            }
+
+            header = new WebSocketFrameHeader
             {
                 ContentLength = contentLength,
                 HeaderLength = headerLength,
                 Flags = flags,
-                RemainingBytes = contentLength
+                RemainingBytes = contentLength,
+                MaskKey = maskKey
             };
-
-            if (flags.MASK)
-            {
-                headerLength -= 4;
-                for (var i = 0; i < 4; i++)
-                    header._key.Array[header._key.Offset + i] = frameStart[offset + i + headerLength];
-            }
 
             return true;
         }
-        public static WebSocketFrameHeader Create(long contentLength, bool isComplete, bool headerSent, ArraySegment<byte> keySegment, WebSocketFrameOption option, WebSocketExtensionFlags extensionFlags)
+        public static WebSocketFrameHeader Create(long contentLength, bool isComplete, bool headerSent, uint maskKey, WebSocketFrameOption option, WebSocketExtensionFlags extensionFlags)
         {
             if (extensionFlags == null) throw new ArgumentNullException(nameof(extensionFlags));
 
-            var isMasked = keySegment.Array != null;
-            if (isMasked && keySegment.Count != 4)
-                throw new WebSocketException("The frame key must have a length of 4");
-
+            var isMasked = maskKey != 0;
             var flags = new WebSocketFrameHeaderFlags(isComplete, isMasked, headerSent ? WebSocketFrameOption.Continuation : option, extensionFlags);
 
             int headerLength;
@@ -172,21 +163,75 @@ namespace vtortola.WebSockets.Rfc6455
                 headerLength = 10;
 
             if (isMasked)
-                headerLength += keySegment.Count;
+                headerLength += 4;
 
-            return new WebSocketFrameHeader(keySegment)
+            return new WebSocketFrameHeader
             {
                 HeaderLength = headerLength,
                 ContentLength = contentLength,
                 Flags = flags,
-                RemainingBytes = contentLength
+                RemainingBytes = contentLength,
+                MaskKey = maskKey
             };
+        }
+
+        private static void MaskPayload(byte[] bytes, int offset, int count, uint maskKey, int maskOffset = 0)
+        {
+            if (bytes == null) throw new ArgumentNullException(nameof(bytes));
+
+            if (maskKey == 0)
+                return;
+
+            if (BitConverter.IsLittleEndian == false)
+                maskKey = ReverseBytes(maskKey); // reverse to little-endian
+
+
+            if (maskOffset != 0)
+            {
+                switch (4 - maskOffset % 4)
+                {
+                    case 4: break;
+                    case 3: bytes[offset] = (byte)(bytes[offset] ^ ((maskKey >> 8) & byte.MaxValue)); offset++; count--; if (count == 0) break; else goto case 2;
+                    case 2: bytes[offset] = (byte)(bytes[offset] ^ ((maskKey >> 16) & byte.MaxValue)); offset++; count--; if (count == 0) break; else goto case 1;
+                    case 1: bytes[offset] = (byte)(bytes[offset] ^ ((maskKey >> 24) & byte.MaxValue)); offset++; count--; break;
+                }
+            }
+
+            var quartetsCount = count / 4;
+            var bytesLeft = count - (quartetsCount * 4);
+
+            if (quartetsCount > 0)
+            {
+                unsafe
+                {
+                    fixed (byte* bufferStartPtr = bytes)
+                    {
+                        var payloadPtr = (uint*)(bufferStartPtr + offset);
+                        for (var i = 0; i < quartetsCount; i++, payloadPtr++)
+                            *payloadPtr = (*payloadPtr) ^ maskKey;
+                    }
+                    offset += quartetsCount * 4;
+                    count -= quartetsCount * 4;
+                }                
+            }
+
+            switch (bytesLeft)
+            {
+                case 3: bytes[offset + 2] = (byte)(bytes[offset + 2] ^ ((maskKey >> 16) & byte.MaxValue)); goto case 2;
+                case 2: bytes[offset + 1] = (byte)(bytes[offset + 1] ^ ((maskKey >> 8) & byte.MaxValue)); goto case 1;
+                case 1: bytes[offset + 0] = (byte)(bytes[offset + 0] ^ ((maskKey >> 0) & byte.MaxValue)); break;
+            }
+        }
+        private static uint ReverseBytes(uint value)
+        {
+            return (value & 0x000000FFU) << 24 | (value & 0x0000FF00U) << 8 |
+                (value & 0x00FF0000U) >> 8 | (value & 0xFF000000U) >> 24;
         }
 
         /// <inheritdoc />
         public override string ToString()
         {
-            return $"{Flags.Option}, len: {this.ContentLength}, key: {(Flags.MASK ? BitConverter.ToUInt32(_key.Array, _key.Offset).ToString("X") : "0")}, flags: {Flags}";
+            return $"{Flags.Option}, len: {this.ContentLength}, key: {this.MaskKey:X}, flags: {Flags}";
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -28,6 +28,16 @@ namespace vtortola.WebSockets.Tools
         {
             return Instance.Next();
         }
+        public static int NextNotZero()
+        {
+            var next = Instance.Next();
+            while (next == 0)
+            {
+                next = Instance.Next();
+            }
+
+            return next;
+        }
         public static double NextDouble()
         {
             return Instance.NextDouble();
@@ -36,12 +46,7 @@ namespace vtortola.WebSockets.Tools
         {
             for (var i = 0; i < arraySegment.Count; i += 4)
             {
-                var next = Next();
-                if (next == 0)
-                {
-                    instance = null; // will re-create random instance
-                    next = Next();
-                }
+                var next = NextNotZero();
 
                 arraySegment.Array[arraySegment.Offset + i] = (byte)(next >> 24);
                 if (i + 1 < arraySegment.Count)

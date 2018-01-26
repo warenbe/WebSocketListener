@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace vtortola.WebSockets.Rfc6455
 {
@@ -36,6 +36,15 @@ namespace vtortola.WebSockets.Rfc6455
             }
         }
 
+        internal static void ToBytes(this uint value, byte[] buffer, int offset)
+        {
+            for (var i = 0; i < 4; i++)
+            {
+                buffer[offset + i] = (byte)value;
+                value >>= 8;
+            }
+        }
+
         internal static void ToBytes(this ulong value, byte[] buffer, int offset)
         {
             for (var i = 0; i < 8; i++)
@@ -48,6 +57,15 @@ namespace vtortola.WebSockets.Rfc6455
         internal static void ToBytesBackwards(this ushort value, byte[] buffer, int offset)
         {
             for (var i = offset + 1; i >= offset; i--)
+            {
+                buffer[i] = (byte)value;
+                value >>= 8;
+            }
+        }
+
+        internal static void ToBytesBackwards(this uint value, byte[] buffer, int offset)
+        {
+            for (var i = offset + 3; i >= offset; i--)
             {
                 buffer[i] = (byte)value;
                 value >>= 8;

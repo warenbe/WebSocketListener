@@ -19,7 +19,7 @@ namespace vtortola.WebSockets.Rfc6455
                 if (connection == null) throw new ArgumentNullException(nameof(connection));
 
                 _pingTimeout = connection.options.PingTimeout < TimeSpan.Zero ? TimeSpan.MaxValue : connection.options.PingTimeout;
-                _pingBuffer = connection.pingBuffer;
+                _pingBuffer = connection.outPingBuffer;
                 _connection = connection;
                 _lastPong = new Stopwatch();
 
