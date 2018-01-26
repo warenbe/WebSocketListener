@@ -37,18 +37,15 @@ namespace vtortola.WebSockets.Async
                 try
                 {
                     await webSocket.SendPingAsync(null, 0, 0).ConfigureAwait(false);
-
-                    if (webSocket.IsConnected && this.IsDisposed == false)
-                        this.GetSubscriptionList().Add(webSocket);
                 }
                 catch (Exception pingError)
-                {
-                    if (webSocket.IsConnected == false)
-                        return;
-
-                    if (pingError is ObjectDisposedException == false && pingError is ThreadAbortException == false)
+                {                    
+                    if (webSocket.IsConnected && pingError is ObjectDisposedException == false && pingError is ThreadAbortException == false)
                         DebugLogger.Instance.Warning("An error occurred while sending ping.", pingError);
                 }
+
+                if (webSocket.IsConnected && this.IsDisposed == false)
+                    this.GetSubscriptionList().Add(webSocket);
             }
             this.listPool.Return(subscriptionList);
         }
