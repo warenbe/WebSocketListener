@@ -109,6 +109,9 @@ The client provides means to read and write messages. With the client, as in the
 `AcceptWebSocketAsync` should be in a loop to continuously accept new clients, also wrapped in a `try/catch` since errors in the negotiation process will be thrown here. Take a look to the [simple host tutorial](https://github.com/vtortola/WebSocketListener/wiki/WebSocketListener-Echo-Server-Example).
 
 #### Receiving messages
+
+⚠️ You must receive messages even if you do not need them. If you do not do this, then random disconnects are possible.
+
 With the client we can *await* a message as a readonly stream:
 
 ```cs
