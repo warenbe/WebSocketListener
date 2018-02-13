@@ -100,14 +100,14 @@ namespace vtortola.WebSockets.Rfc6455
             var dataFrame = this._webSocket.Connection.PrepareFrame(this._webSocket.Connection.SendBuffer, this._internalUsedBufferLength, true, this._isHeaderSent, this._messageType, this.ExtensionFlags);
             var sendFrameTask = this._webSocket.Connection.SendFrameAsync(dataFrame, CancellationToken.None);
 
-            sendFrameTask.ContinueWith(
+            var endWriteTask = sendFrameTask.ContinueWith(
                 (sendTask, s) => ((WebSocketConnectionRfc6455)s).EndWriting(),
                 this._webSocket.Connection,
                 CancellationToken.None,
                 TaskContinuationOptions.ExecuteSynchronously,
                 TaskScheduler.Default);
 
-            return sendFrameTask;
+            return endWriteTask;
         }
 
         protected override void Dispose(bool disposing)
