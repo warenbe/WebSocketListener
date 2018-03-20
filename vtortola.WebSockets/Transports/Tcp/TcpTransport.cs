@@ -2,7 +2,6 @@
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
-#define DUAL_MODE
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -24,6 +23,7 @@ namespace vtortola.WebSockets.Transports.Tcp
         public const int DEFAULT_RECEIVE_TIMEOUT_MS = 5000;
         public const bool DEFAULT_NO_DELAY = false;
         public const bool DEFAULT_IS_ASYNC = true;
+        public const bool DEFAULT_DUAL_MODE = false;
 #if !NETSTANDARD && !UAP
         public const IPProtectionLevel DEFAULT_IP_PROTECTION_LEVEL = IPProtectionLevel.Unspecified;
 #endif
@@ -36,6 +36,7 @@ namespace vtortola.WebSockets.Transports.Tcp
         public TimeSpan ReceiveTimeout { get; set; } = TimeSpan.FromMilliseconds(DEFAULT_RECEIVE_TIMEOUT_MS);
         public int SendBufferSize { get; set; } = DEFAULT_SEND_BUFFER_SIZE;
         public TimeSpan SendTimeout { get; set; } = TimeSpan.FromMilliseconds(DEFAULT_SEND_TIMEOUT_MS);
+        public bool DualMode { get; set; } = DEFAULT_DUAL_MODE;
 #if !NETSTANDARD && !UAP
         public IPProtectionLevel IpProtectionLevel { get; set; } = DEFAULT_IP_PROTECTION_LEVEL;
         public bool IsAsync { get; set; } = DEFAULT_IS_ASYNC;
@@ -84,13 +85,15 @@ namespace vtortola.WebSockets.Transports.Tcp
             var isSecure = this.ShouldUseSsl(address);
             var port = address.Port <= 0 ? (isSecure ? DEFAULT_SECURE_PORT : DEFAULT_PORT) : address.Port;
             if (IPAddress.TryParse(address.DnsSafeHost, out remoteIpAddress))
+            {
                 return new IPEndPoint(remoteIpAddress, port);
+            }
 
-#if DUAL_MODE
-            if (Properties.RuntimeInformation.IsMono == false)
+            if (this.DualMode)
                 return new DnsEndPoint(address.DnsSafeHost, port, AddressFamily.InterNetworkV6);
-#endif
-            return new DnsEndPoint(address.DnsSafeHost, port, AddressFamily.InterNetwork);
+            else
+                return new DnsEndPoint(address.DnsSafeHost, port, AddressFamily.InterNetwork);
+
         }
         /// <inheritdoc />
         protected override ProtocolType GetProtocolType(Uri address, EndPoint remoteEndPoint)
@@ -100,10 +103,11 @@ namespace vtortola.WebSockets.Transports.Tcp
         /// <inheritdoc />
         protected override void SetupClientSocket(Socket socket, EndPoint remoteEndPoint)
         {
-#if DUAL_MODE
-            if (Properties.RuntimeInformation.IsMono == false && remoteEndPoint.AddressFamily == AddressFamily.InterNetworkV6)
+            if (this.DualMode && remoteEndPoint.AddressFamily == AddressFamily.InterNetworkV6)
+            {
                 socket.DualMode = true;
-#endif
+            }
+
             if (this.LingerState != null)
                 socket.LingerState = this.LingerState;
             socket.NoDelay = this.NoDelay;
@@ -113,7 +117,9 @@ namespace vtortola.WebSockets.Transports.Tcp
             socket.SendTimeout = (int)this.SendTimeout.TotalMilliseconds + 1;
 #if !NETSTANDARD && !UAP
             if (this.IpProtectionLevel != IPProtectionLevel.Unspecified)
+            {
                 socket.SetIPProtectionLevel(this.IpProtectionLevel);
+            }
             socket.UseOnlyOverlappedIO = this.IsAsync;
 #endif
         }
