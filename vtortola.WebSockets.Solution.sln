@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26430.6
+VisualStudioVersion = 15.0.27130.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FB6FB7EB-57F6-4D57-9322-6FB113FB0C88}"
 	ProjectSection(SolutionItems) = preProject
@@ -9,56 +9,25 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vtortola.WebSockets", "vtortola.WebSockets\vtortola.WebSockets.csproj", "{1BD8E3C1-EF7D-4D58-89E2-33E5EC7C9406}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vtortola.WebSockets", "vtortola.WebSockets\vtortola.WebSockets.csproj", "{1BD8E3C1-EF7D-4D58-89E2-33E5EC7C9406}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vtortola.WebSockets.Deflate", "vtortola.WebSockets.Deflate\vtortola.WebSockets.Deflate.csproj", "{3BFDAE73-A6A9-40B9-9026-84DD005BBAC9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vtortola.WebSockets.Deflate", "vtortola.WebSockets.Deflate\vtortola.WebSockets.Deflate.csproj", "{3BFDAE73-A6A9-40B9-9026-84DD005BBAC9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "vtortola.WebSockets.Rfc6455", "vtortola.WebSockets.Rfc6455\vtortola.WebSockets.Rfc6455.csproj", "{72114F0D-EC56-43D5-8C13-43FB013C0C1D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vtortola.WebSockets.Rfc6455", "vtortola.WebSockets.Rfc6455\vtortola.WebSockets.Rfc6455.csproj", "{72114F0D-EC56-43D5-8C13-43FB013C0C1D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{B5897DED-14F9-461B-9A4C-C5BAA859F80F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{0F46150F-76EE-4CB5-8D1D-0C6C6B876782}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EchoServer", "Samples\EchoServer\EchoServer.csproj", "{9586718A-CBF0-4E42-9FAC-81C09B59DF47}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EchoServer", "Samples\EchoServer\EchoServer.csproj", "{9586718A-CBF0-4E42-9FAC-81C09B59DF47}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RxWebsocketChatServer", "Samples\RxWebSocketChat\RxWebSocketChatServer\RxWebsocketChatServer.csproj", "{D28A87C6-3ED0-43B8-9A66-0AE814D72D38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MonoEchoServer", "Samples\MonoEchoServer\MonoEchoServer.csproj", "{DE9CE632-9DC4-4330-AFB8-B6A7C2CB10D2}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketChatClient", "Samples\RxWebSocketChat\WebSocketChatClientMVC\WebSocketChatClient.csproj", "{F55E5E30-332A-4252-A02F-2FD9C7A43D60}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TerminalServer.CliServer", "Samples\TerminalServer\TerminalServer.CliServer\TerminalServer.CliServer.csproj", "{A65FE92A-29C0-4F73-8870-E1A008D92BAD}"
-EndProject
-Project("{E24C65DC-7377-472B-9ABA-BC803B73C61A}") = "TerminalServer.Web", "Samples\TerminalServer\TerminalServer.Web\", "{476B1CA6-27C3-4EBA-8DD7-C473653C562A}"
-	ProjectSection(WebsiteProperties) = preProject
-		TargetFrameworkMoniker = ".NETFramework,Version%3Dv4.5"
-		Debug.AspNetCompiler.VirtualPath = "/localhost_60146"
-		Debug.AspNetCompiler.PhysicalPath = "Samples\TerminalServer\TerminalServer.Web\"
-		Debug.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_60146\"
-		Debug.AspNetCompiler.Updateable = "true"
-		Debug.AspNetCompiler.ForceOverwrite = "true"
-		Debug.AspNetCompiler.FixedNames = "false"
-		Debug.AspNetCompiler.Debug = "True"
-		Release.AspNetCompiler.VirtualPath = "/localhost_60146"
-		Release.AspNetCompiler.PhysicalPath = "Samples\TerminalServer\TerminalServer.Web\"
-		Release.AspNetCompiler.TargetPath = "PrecompiledWeb\localhost_60146\"
-		Release.AspNetCompiler.Updateable = "true"
-		Release.AspNetCompiler.ForceOverwrite = "true"
-		Release.AspNetCompiler.FixedNames = "false"
-		Release.AspNetCompiler.Debug = "False"
-		VWDPort = "60146"
-		SlnRelativePath = "Samples\TerminalServer\TerminalServer.Web\"
-	EndProjectSection
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketEventListenerSample", "Samples\WebSocketEventListener\WebSocketEventListenerSample.csproj", "{48051799-D0AB-45AF-ABAD-432949BDDE08}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketListenerService", "Samples\WebSocketListenerService\WebSocketListenerService.csproj", "{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MonoEchoServer", "Samples\MonoEchoServer\MonoEchoServer.csproj", "{DE9CE632-9DC4-4330-AFB8-B6A7C2CB10D2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebSocketClient", "Samples\WebSocketClient\WebSocketClient.csproj", "{604B8795-00BA-45D9-941A-998E3EE5AE78}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebSocketClient", "Samples\WebSocketClient\WebSocketClient.csproj", "{604B8795-00BA-45D9-941A-998E3EE5AE78}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "vtortola.WebSockets.UnitTests", "Tests\WebSocketListener.UnitTests\vtortola.WebSockets.UnitTests.csproj", "{DAD7F83D-7FA3-43C0-A7C6-DE348F96B403}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "deniszykov.WebSocketListener", "deniszykov.WebSocketListener\deniszykov.WebSocketListener.csproj", "{BF96AE8B-D2A0-467A-849F-8F3996B3636F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "deniszykov.WebSocketListener", "deniszykov.WebSocketListener\deniszykov.WebSocketListener.csproj", "{BF96AE8B-D2A0-467A-849F-8F3996B3636F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,54 +69,6 @@ Global
 		{9586718A-CBF0-4E42-9FAC-81C09B59DF47}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9586718A-CBF0-4E42-9FAC-81C09B59DF47}.Release|x86.ActiveCfg = Release|Any CPU
 		{9586718A-CBF0-4E42-9FAC-81C09B59DF47}.Release|x86.Build.0 = Release|Any CPU
-		{D28A87C6-3ED0-43B8-9A66-0AE814D72D38}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D28A87C6-3ED0-43B8-9A66-0AE814D72D38}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D28A87C6-3ED0-43B8-9A66-0AE814D72D38}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{D28A87C6-3ED0-43B8-9A66-0AE814D72D38}.Debug|x86.Build.0 = Debug|Any CPU
-		{D28A87C6-3ED0-43B8-9A66-0AE814D72D38}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D28A87C6-3ED0-43B8-9A66-0AE814D72D38}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D28A87C6-3ED0-43B8-9A66-0AE814D72D38}.Release|x86.ActiveCfg = Release|Any CPU
-		{D28A87C6-3ED0-43B8-9A66-0AE814D72D38}.Release|x86.Build.0 = Release|Any CPU
-		{F55E5E30-332A-4252-A02F-2FD9C7A43D60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F55E5E30-332A-4252-A02F-2FD9C7A43D60}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F55E5E30-332A-4252-A02F-2FD9C7A43D60}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{F55E5E30-332A-4252-A02F-2FD9C7A43D60}.Debug|x86.Build.0 = Debug|Any CPU
-		{F55E5E30-332A-4252-A02F-2FD9C7A43D60}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F55E5E30-332A-4252-A02F-2FD9C7A43D60}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F55E5E30-332A-4252-A02F-2FD9C7A43D60}.Release|x86.ActiveCfg = Release|Any CPU
-		{F55E5E30-332A-4252-A02F-2FD9C7A43D60}.Release|x86.Build.0 = Release|Any CPU
-		{A65FE92A-29C0-4F73-8870-E1A008D92BAD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A65FE92A-29C0-4F73-8870-E1A008D92BAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A65FE92A-29C0-4F73-8870-E1A008D92BAD}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{A65FE92A-29C0-4F73-8870-E1A008D92BAD}.Debug|x86.Build.0 = Debug|Any CPU
-		{A65FE92A-29C0-4F73-8870-E1A008D92BAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A65FE92A-29C0-4F73-8870-E1A008D92BAD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A65FE92A-29C0-4F73-8870-E1A008D92BAD}.Release|x86.ActiveCfg = Release|Any CPU
-		{A65FE92A-29C0-4F73-8870-E1A008D92BAD}.Release|x86.Build.0 = Release|Any CPU
-		{476B1CA6-27C3-4EBA-8DD7-C473653C562A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{476B1CA6-27C3-4EBA-8DD7-C473653C562A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{476B1CA6-27C3-4EBA-8DD7-C473653C562A}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{476B1CA6-27C3-4EBA-8DD7-C473653C562A}.Debug|x86.Build.0 = Debug|Any CPU
-		{476B1CA6-27C3-4EBA-8DD7-C473653C562A}.Release|Any CPU.ActiveCfg = Debug|Any CPU
-		{476B1CA6-27C3-4EBA-8DD7-C473653C562A}.Release|Any CPU.Build.0 = Debug|Any CPU
-		{476B1CA6-27C3-4EBA-8DD7-C473653C562A}.Release|x86.ActiveCfg = Debug|Any CPU
-		{476B1CA6-27C3-4EBA-8DD7-C473653C562A}.Release|x86.Build.0 = Debug|Any CPU
-		{48051799-D0AB-45AF-ABAD-432949BDDE08}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{48051799-D0AB-45AF-ABAD-432949BDDE08}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{48051799-D0AB-45AF-ABAD-432949BDDE08}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{48051799-D0AB-45AF-ABAD-432949BDDE08}.Debug|x86.Build.0 = Debug|Any CPU
-		{48051799-D0AB-45AF-ABAD-432949BDDE08}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{48051799-D0AB-45AF-ABAD-432949BDDE08}.Release|Any CPU.Build.0 = Release|Any CPU
-		{48051799-D0AB-45AF-ABAD-432949BDDE08}.Release|x86.ActiveCfg = Release|Any CPU
-		{48051799-D0AB-45AF-ABAD-432949BDDE08}.Release|x86.Build.0 = Release|Any CPU
-		{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7}.Debug|x86.Build.0 = Debug|Any CPU
-		{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7}.Release|Any CPU.Build.0 = Release|Any CPU
-		{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7}.Release|x86.ActiveCfg = Release|Any CPU
-		{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7}.Release|x86.Build.0 = Release|Any CPU
 		{DE9CE632-9DC4-4330-AFB8-B6A7C2CB10D2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{DE9CE632-9DC4-4330-AFB8-B6A7C2CB10D2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE9CE632-9DC4-4330-AFB8-B6A7C2CB10D2}.Debug|x86.ActiveCfg = Debug|Any CPU
@@ -186,14 +107,11 @@ Global
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9586718A-CBF0-4E42-9FAC-81C09B59DF47} = {B5897DED-14F9-461B-9A4C-C5BAA859F80F}
-		{D28A87C6-3ED0-43B8-9A66-0AE814D72D38} = {B5897DED-14F9-461B-9A4C-C5BAA859F80F}
-		{F55E5E30-332A-4252-A02F-2FD9C7A43D60} = {B5897DED-14F9-461B-9A4C-C5BAA859F80F}
-		{A65FE92A-29C0-4F73-8870-E1A008D92BAD} = {B5897DED-14F9-461B-9A4C-C5BAA859F80F}
-		{476B1CA6-27C3-4EBA-8DD7-C473653C562A} = {B5897DED-14F9-461B-9A4C-C5BAA859F80F}
-		{48051799-D0AB-45AF-ABAD-432949BDDE08} = {B5897DED-14F9-461B-9A4C-C5BAA859F80F}
-		{407E0F3E-F6D7-44F0-84B4-3F89E0ECAEB7} = {B5897DED-14F9-461B-9A4C-C5BAA859F80F}
 		{DE9CE632-9DC4-4330-AFB8-B6A7C2CB10D2} = {B5897DED-14F9-461B-9A4C-C5BAA859F80F}
 		{604B8795-00BA-45D9-941A-998E3EE5AE78} = {B5897DED-14F9-461B-9A4C-C5BAA859F80F}
 		{DAD7F83D-7FA3-43C0-A7C6-DE348F96B403} = {0F46150F-76EE-4CB5-8D1D-0C6C6B876782}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {7B9ECE8B-DF2B-4478-995F-BD61E91AACFF}
 	EndGlobalSection
 EndGlobal
