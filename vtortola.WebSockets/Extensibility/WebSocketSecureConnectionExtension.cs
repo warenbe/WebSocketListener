@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Net.Security;
 using System.Security.Authentication;
 using System.Security.Cryptography.X509Certificates;
@@ -43,9 +43,18 @@ namespace vtortola.WebSockets
             if (networkConnection == null) throw new ArgumentNullException(nameof(networkConnection));
 
             var ssl = new SslStream(networkConnection.AsStream(), false, _validation);
-            await ssl.AuthenticateAsServerAsync(_certificate, _validation != null, _protocols, false).ConfigureAwait(false);
-            return new SslNetworkConnection(ssl, networkConnection);
+            try
+            {
+                await ssl.AuthenticateAsServerAsync(_certificate, _validation != null, _protocols, false).ConfigureAwait(false);
+                return new SslNetworkConnection(ssl, networkConnection);
+            }
+            catch
+            {
+                SafeEnd.Dispose(ssl);
+                throw;
+            }
         }
+
         /// <inheritdoc />
         public IWebSocketConnectionExtension Clone()
         {

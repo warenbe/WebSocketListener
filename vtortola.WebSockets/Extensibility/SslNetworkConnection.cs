@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using System.Net.Security;
@@ -59,8 +59,8 @@ namespace vtortola.WebSockets.Extensibility
         /// <inheritdoc />
         public override void Dispose(bool disposed)
         {
-            this.UnderlyingConnection.Dispose(disposed);
             this.sslStream.Dispose();
+            this.UnderlyingConnection.Dispose(disposed);
         }
 
         /// <inheritdoc />
