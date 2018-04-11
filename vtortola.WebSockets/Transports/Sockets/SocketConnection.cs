@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -227,6 +227,21 @@ namespace vtortola.WebSockets.Transports.Sockets
 
             var operationCompletionSource = (TaskCompletionSource<int>)socketAsyncEventArgs.UserToken;
             socketAsyncEventArgs.UserToken = null;
+
+            var error = socketAsyncEventArgs.SocketError;
+            if (this.IsClosed)
+            {
+                if (error == SocketError.Success) // make sure operation fails with socket error
+                    error = SocketError.OperationAborted;
+
+                // don't cleanup closed async event because
+                // it will cause ObjectDisposedException in .NET
+            }
+            else
+            {
+                socketAsyncEventArgs.SetBuffer(null, 0, 0);
+                socketAsyncEventArgs.BufferList = null;
+            }
 
             if (socketAsyncEventArgs.ConnectByNameError != null) // never happens but just in case
             {
