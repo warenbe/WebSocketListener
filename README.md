@@ -30,7 +30,8 @@ Take a look on the [performance and load  tests](//github.com/vtortola/WebSocket
 
 What's new in v4 (this fork)
 =================
-This is a fork from the [project](https://github.com/vtortola/WebSocketListener) that adds new functionality and fixes errors.
+This is a fork from [project](https://github.com/vtortola/WebSocketListener). 
+There is some new features and bug fixes.
 
 Major Features:
 - WebSocketClient
@@ -49,22 +50,22 @@ Minor Features:
 - Logging via abstract ILogger
 - No additional dependencies (ServiceModel, TPL Dataflow)
 - New Headers<HeadersT> collections with fast access to known headers
-- custom BufferManager, and use of BufferManager in all operations with buffers
-- More unit-tests
+- Custom BufferManager, and use of BufferManager in all operations with buffers
 - WebSocketListener can now listen multiple endpoints from different transports
 - Pings now processed in batches or could be manually batched and sent (WebSocket.PingAsync)
 - WebSocketMessageWriteStream now can be gracefully closed with CloseAsync()
 - Tested to work under load
-
+- More unit-tests
+    
 Lost Features:
-- UWP target platform
-- Sync API on WebSocket and Streams
-- Cookies collection on WebSocketHttpRequest (class is not removed)
-- Removed potentially dangerous feature 'RemoveBOM' on WSWriteStream.Write. Refactored default WriteStringAsync(), ReadStringAsync methods to use UTF-8 without BOM
+- UWP target platform (netstandard1.3 is added instead)
+- synchronous IO methods on WebSocket and Streams (Write/Read/Close)
+- Cookies collection on WebSocketHttpRequest (class is still there)
+- Removed potentially dangerous feature 'RemoveBOM' on WSWriteStream.Write and refactored WriteStringAsync(), ReadStringAsync methods to use UTF-8 without BOM
 
 Known Problems:
-- WebSocketDeflateStream uses sync Stream methods, it should be rewritten to fully support async operations
-- Mono can't handle IPv6 Dual Mode sockets properly (exception in Socket.RemoteEndPoint and Socket.LocalEndPoint)
+- WebSocketDeflateStream uses sync Stream methods, it should be rewritten to fully support async operations.
+- Mono can't handle IPv6 Dual Mode sockets properly (exception in Socket.RemoteEndPoint and Socket.LocalEndPoint).
 
 ### Quickstart
 
