@@ -276,6 +276,9 @@ namespace vtortola.WebSockets.Rfc6455
                     return false;
 
                 var writeErrorUnwrap = writeError.Unwrap();
+                if (writeErrorUnwrap is ObjectDisposedException)
+                    writeErrorUnwrap = new IOException("Network connection has been closed.", writeErrorUnwrap);
+
                 if (this.log.IsDebugEnabled && writeErrorUnwrap is OperationCanceledException == false && this.IsConnected)
                     this.log.Debug($"({this.GetHashCode():X}) Write operation on WebSocket stream is failed.", writeErrorUnwrap);
 
