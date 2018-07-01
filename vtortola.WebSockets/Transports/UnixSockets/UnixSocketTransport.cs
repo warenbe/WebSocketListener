@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 ы	License: https://opensource.org/licenses/MIT
 */
@@ -12,6 +12,7 @@ using System.Net.Sockets;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
+using vtortola.WebSockets.Tools;
 using vtortola.WebSockets.Transports.Sockets;
 
 namespace vtortola.WebSockets.Transports.UnixSockets
@@ -52,28 +53,36 @@ namespace vtortola.WebSockets.Transports.UnixSockets
 
             var pathParam = Expression.Parameter(typeof(string), "filename");
 
-            UnixEndPointConstructor = Expression.Lambda<Func<string, EndPoint>>(
-                Expression.ConvertChecked
-                (
-                    Expression.New(unixEndPointCtr, pathParam),
-                    typeof(EndPoint)
-                ),
-                pathParam
-            ).Compile();
-
-            var endPointParam = Expression.Parameter(typeof(EndPoint), "endPointParam");
-            UnixEndPointGetFileName = Expression.Lambda<Func<EndPoint, string>>(
-                Expression.Call
-                (
+            if (ReflectionHelper.IsDynamicCompilationSupported)
+            {
+                UnixEndPointConstructor = Expression.Lambda<Func<string, EndPoint>>(
                     Expression.ConvertChecked
                     (
-                        endPointParam,
-                        unixEndPointType.AsType()
+                        Expression.New(unixEndPointCtr, pathParam),
+                        typeof(EndPoint)
                     ),
-                    fileNameGet
-                ),
-                endPointParam
-            ).Compile();
+                    pathParam
+                ).Compile();
+
+                var endPointParam = Expression.Parameter(typeof(EndPoint), "endPointParam");
+                UnixEndPointGetFileName = Expression.Lambda<Func<EndPoint, string>>(
+                    Expression.Call
+                    (
+                        Expression.ConvertChecked
+                        (
+                            endPointParam,
+                            unixEndPointType.AsType()
+                        ),
+                        fileNameGet
+                    ),
+                    endPointParam
+                ).Compile();
+            }
+            else
+            {
+                UnixEndPointConstructor = path => (EndPoint)unixEndPointCtr.Invoke(new object[] { path });
+                UnixEndPointGetFileName = endPoint => (string)fileNameGet.Invoke(endPoint, default(object[]));
+            }
         }
 
         /// <inheritdoc />
