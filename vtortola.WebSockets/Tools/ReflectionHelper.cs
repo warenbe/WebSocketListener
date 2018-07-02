@@ -15,7 +15,7 @@ namespace vtortola.WebSockets.Tools
             }
             catch
             {
-                IsDynamicCompilationSupported = true;
+                IsDynamicCompilationSupported = false;
             }
         }
 
