@@ -16,7 +16,7 @@ using vtortola.WebSockets.Tools;
 
 namespace vtortola.WebSockets.Transports.Sockets
 {
-    public class SocketConnection : NetworkConnection
+    internal class SocketConnection : NetworkConnection
     {
         private static readonly byte[] JunkBytes = new byte[4 * 1024];
         public static readonly EndPoint BrokenEndPoint = new IPEndPoint(IPAddress.Any, 0);

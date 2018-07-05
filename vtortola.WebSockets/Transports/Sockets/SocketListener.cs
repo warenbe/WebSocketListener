@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -15,7 +15,7 @@ using vtortola.WebSockets.Tools;
 
 namespace vtortola.WebSockets.Transports.Sockets
 {
-    public abstract class SocketListener : Listener
+    internal abstract class SocketListener : Listener
     {
         private const int STATE_LISTENING = 0;
         private const int STATE_ACCEPTING = 1;

@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace vtortola.WebSockets.Transports
 {
-    public abstract class Listener : IDisposable
+    internal abstract class Listener : IDisposable
     {
         public abstract IReadOnlyCollection<EndPoint> LocalEndpoints { get; }
 

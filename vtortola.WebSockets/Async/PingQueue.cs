@@ -10,7 +10,7 @@ using PingSubscriptionList = System.Collections.Concurrent.ConcurrentBag<vtortol
 
 namespace vtortola.WebSockets.Async
 {
-    public class PingQueue : TimedQueue<PingSubscriptionList>
+    internal class PingQueue : NotificationQueue<PingSubscriptionList>
     {
         private readonly ObjectPool<PingSubscriptionList> listPool;
 

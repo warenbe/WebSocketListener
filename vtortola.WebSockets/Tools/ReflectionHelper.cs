@@ -3,7 +3,7 @@ using System.Linq.Expressions;
 
 namespace vtortola.WebSockets.Tools
 {
-    public sealed class ReflectionHelper
+    internal sealed class ReflectionHelper
     {
         public static bool IsDynamicCompilationSupported;
 

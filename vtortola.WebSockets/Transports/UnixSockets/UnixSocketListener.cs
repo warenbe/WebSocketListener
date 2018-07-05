@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -12,7 +12,7 @@ using vtortola.WebSockets.Transports.Sockets;
 
 namespace vtortola.WebSockets.Transports.UnixSockets
 {
-    public sealed class UnixSocketListener : SocketListener
+    internal sealed class UnixSocketListener : SocketListener
     {
         private readonly UnixSocketTransport transport;
 

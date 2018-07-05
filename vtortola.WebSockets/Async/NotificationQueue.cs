@@ -14,7 +14,7 @@ using vtortola.WebSockets.Tools;
 
 namespace vtortola.WebSockets.Async
 {
-    public abstract class TimedQueue<SubscriptionListT> : IDisposable where SubscriptionListT : class
+    internal abstract class NotificationQueue<SubscriptionListT> : IDisposable where SubscriptionListT : class
     {
         // ReSharper disable once StaticMemberInGenericType
         private static readonly double TicksPerStopwatchTick = TimeSpan.TicksPerSecond / (double)Stopwatch.Frequency;
@@ -36,7 +36,7 @@ namespace vtortola.WebSockets.Async
         public TimeSpan Period { get; }
         public bool IsDisposed => this.disposeState == 1;
 
-        protected TimedQueue(TimeSpan period, TaskScheduler notificationScheduler = null)
+        protected NotificationQueue(TimeSpan period, TaskScheduler notificationScheduler = null)
         {
             if (period <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(period), "period should be greater than TimeSpan.Zero");
 

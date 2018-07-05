@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -8,7 +8,7 @@ using vtortola.WebSockets.Transports.Sockets;
 
 namespace vtortola.WebSockets.Transports.Tcp
 {
-    public sealed class TcpConnection : SocketConnection
+    internal sealed class TcpConnection : SocketConnection
     {
         private readonly Socket socket;
 

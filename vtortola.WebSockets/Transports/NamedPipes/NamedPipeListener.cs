@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -14,7 +14,7 @@ using vtortola.WebSockets.Transports.Tcp;
 #pragma warning disable 420
 namespace vtortola.WebSockets.Transports.NamedPipes
 {
-    public sealed class NamedPipeListener : Listener
+    internal sealed class NamedPipeListener : Listener
     {
         private const int STATE_LISTENING = 0;
         private const int STATE_ACCEPTING = 1;

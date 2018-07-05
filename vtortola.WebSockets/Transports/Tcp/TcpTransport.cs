@@ -46,7 +46,7 @@ namespace vtortola.WebSockets.Transports.Tcp
         public override IReadOnlyCollection<string> Schemes => SupportedSchemes;
 
         /// <inheritdoc />
-        public override async Task<Listener> ListenAsync(Uri address, WebSocketListenerOptions options)
+        internal override async Task<Listener> ListenAsync(Uri address, WebSocketListenerOptions options)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
             if (options == null) throw new ArgumentNullException(nameof(options));
@@ -70,7 +70,7 @@ namespace vtortola.WebSockets.Transports.Tcp
         }
 
         /// <inheritdoc />
-        public override bool ShouldUseSsl(Uri address)
+        internal override bool ShouldUseSsl(Uri address)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
 

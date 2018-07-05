@@ -11,7 +11,7 @@ using vtortola.WebSockets.Transports.Sockets;
 
 namespace vtortola.WebSockets.Transports.Tcp
 {
-    public sealed class TcpListener : SocketListener
+    internal sealed class TcpListener : SocketListener
     {
         private readonly TcpTransport transport;
 

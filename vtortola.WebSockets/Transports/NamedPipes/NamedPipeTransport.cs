@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -25,12 +25,12 @@ namespace vtortola.WebSockets.Transports.NamedPipes
         /// <inheritdoc />
         public override IReadOnlyCollection<string> Schemes => SupportedSchemes;
         /// <inheritdoc />
-        public override Task<Listener> ListenAsync(Uri address, WebSocketListenerOptions options)
+        internal override Task<Listener> ListenAsync(Uri address, WebSocketListenerOptions options)
         {
             return Task.FromResult((Listener)new NamedPipeListener(this, address, options));
         }
         /// <inheritdoc />
-        public override Task<NetworkConnection> ConnectAsync(Uri address, WebSocketListenerOptions options, CancellationToken cancellation)
+        internal override Task<NetworkConnection> ConnectAsync(Uri address, WebSocketListenerOptions options, CancellationToken cancellation)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
             if (options == null) throw new ArgumentNullException(nameof(options));
@@ -43,7 +43,7 @@ namespace vtortola.WebSockets.Transports.NamedPipes
             return Task.FromResult((NetworkConnection)new NamedPipeConnection(clientPipeStream, pipeName));
         }
         /// <inheritdoc />
-        public override bool ShouldUseSsl(Uri requestUri)
+        internal override bool ShouldUseSsl(Uri requestUri)
         {
             if (requestUri == null) throw new ArgumentNullException(nameof(requestUri));
 

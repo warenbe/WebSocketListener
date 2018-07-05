@@ -24,7 +24,7 @@ namespace vtortola.WebSockets.Transports.Sockets
         }
 
         /// <inheritdoc />
-        public override async Task<NetworkConnection> ConnectAsync(Uri address, WebSocketListenerOptions options, CancellationToken cancellation)
+        internal override async Task<NetworkConnection> ConnectAsync(Uri address, WebSocketListenerOptions options, CancellationToken cancellation)
         {
             if (address == null) throw new ArgumentNullException(nameof(address));
             if (options == null) throw new ArgumentNullException(nameof(options));

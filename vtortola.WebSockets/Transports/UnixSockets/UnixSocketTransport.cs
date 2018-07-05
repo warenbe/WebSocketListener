@@ -86,7 +86,7 @@ namespace vtortola.WebSockets.Transports.UnixSockets
         }
 
         /// <inheritdoc />
-        public override async Task<Listener> ListenAsync(Uri address, WebSocketListenerOptions options)
+        internal override async Task<Listener> ListenAsync(Uri address, WebSocketListenerOptions options)
         {
             var unixEndPoint = this.GetRemoteEndPoint(address);
 
@@ -98,7 +98,7 @@ namespace vtortola.WebSockets.Transports.UnixSockets
             return listener;
         }
         /// <inheritdoc />
-        public override bool ShouldUseSsl(Uri address)
+        internal override bool ShouldUseSsl(Uri address)
         {
             return false;
         }

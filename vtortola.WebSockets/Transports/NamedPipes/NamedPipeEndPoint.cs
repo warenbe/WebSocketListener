@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -9,7 +9,7 @@ using System.Text;
 
 namespace vtortola.WebSockets.Transports.NamedPipes
 {
-    public class NamedPipeEndPoint : EndPoint
+    internal class NamedPipeEndPoint : EndPoint
     {
         public string PipeName { get; }
 

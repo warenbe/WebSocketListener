@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -13,7 +13,7 @@ using vtortola.WebSockets.Tools;
 
 namespace vtortola.WebSockets.Transports.NamedPipes
 {
-    public class NamedPipeConnection : NetworkConnection
+    internal class NamedPipeConnection : NetworkConnection
     {
         private readonly PipeStream pipeStream;
 
