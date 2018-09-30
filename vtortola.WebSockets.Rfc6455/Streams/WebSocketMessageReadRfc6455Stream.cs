@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using vtortola.WebSockets.Tools;
 
 namespace vtortola.WebSockets.Rfc6455
@@ -18,16 +19,26 @@ namespace vtortola.WebSockets.Rfc6455
         public override WebSocketMessageType MessageType { get; }
         public override WebSocketExtensionFlags Flags { get; }
 
-        public WebSocketMessageReadRfc6455Stream(WebSocketRfc6455 webSocket)
+        public WebSocketMessageReadRfc6455Stream([NotNull] WebSocketRfc6455 webSocket)
         {
             if (webSocket == null) throw new ArgumentNullException(nameof(webSocket));
 
             _webSocket = webSocket;
-            this.MessageType = (WebSocketMessageType)_webSocket.Connection.CurrentHeader.Flags.Option;
+
+            var headerOptions = this._webSocket.Connection.CurrentHeader.Flags.Option;
+
+            this.MessageType = (WebSocketMessageType)headerOptions;
             this.Flags = GetExtensionFlags(_webSocket.Connection.CurrentHeader.Flags);
             _hasPendingFrames = !_webSocket.Connection.CurrentHeader.Flags.FIN;
-            if (_webSocket.Connection.CurrentHeader.Flags.Option != WebSocketFrameOption.Binary && _webSocket.Connection.CurrentHeader.Flags.Option != WebSocketFrameOption.Text)
-                throw new WebSocketException($"WebSocketMessageReadNetworkStream can only start with a Text or Binary frame, not {_webSocket.Connection.CurrentHeader.Flags.Option}.");
+            
+            if (headerOptions != WebSocketFrameOption.Binary &&
+                headerOptions != WebSocketFrameOption.Text)
+            {
+                var headerIntValue = (int)headerOptions;
+
+                throw new WebSocketException(
+                    $"WebSocketMessageReadNetworkStream can only start with a Text or Binary frame, not {headerOptions} ({headerIntValue}).");
+            }
         }
 
         private static WebSocketExtensionFlags GetExtensionFlags(WebSocketFrameHeaderFlags webSocketFrameHeaderFlags)
