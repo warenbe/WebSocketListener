@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using vtortola.WebSockets.Rfc6455.Header;
 using vtortola.WebSockets.Tools;
 
 namespace vtortola.WebSockets.Rfc6455
