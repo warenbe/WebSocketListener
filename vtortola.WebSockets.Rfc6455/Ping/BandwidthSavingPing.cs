@@ -9,36 +9,41 @@ namespace vtortola.WebSockets.Rfc6455
     {
         private sealed class BandwidthSavingPing : PingHandler
         {
-            private readonly ArraySegment<byte> _pingBuffer;
-            private readonly TimeSpan _pingTimeout;
-            private readonly WebSocketConnectionRfc6455 _connection;
-            private readonly Stopwatch _lastPong;
+            private readonly ArraySegment<byte> pingBuffer;
+            private readonly TimeSpan pingTimeout;
+            private readonly WebSocketConnectionRfc6455 connection;
+            private readonly Stopwatch lastPong;
 
             public BandwidthSavingPing(WebSocketConnectionRfc6455 connection)
             {
                 if (connection == null) throw new ArgumentNullException(nameof(connection));
 
-                _pingTimeout = connection.options.PingTimeout < TimeSpan.Zero ? TimeSpan.MaxValue : connection.options.PingTimeout;
-                _pingBuffer = connection.outPingBuffer;
-                _connection = connection;
-                _lastPong = new Stopwatch();
+                this.pingTimeout = connection.options.PingTimeout < TimeSpan.Zero ? TimeSpan.MaxValue : connection.options.PingTimeout;
+                this.pingBuffer = connection.outPingBuffer;
+                this.connection = connection;
+                this.lastPong = new Stopwatch();
             }
 
             public override async Task PingAsync()
             {
-                if (this._connection.IsClosed)
+                if (this.connection.IsClosed)
                     return;
 
-                if (this._lastPong.Elapsed > this._pingTimeout)
+                if (this.lastPong.Elapsed > this.pingTimeout)
                 {
-                    await this._connection.CloseAsync(WebSocketCloseReasons.GoingAway).ConfigureAwait(false);
+                    await this.connection.CloseAsync(WebSocketCloseReasons.GoingAway).ConfigureAwait(false);
                     return;
                 }
 
+                if (this.lastPong.IsRunning)
+                {
+                    return; // no pong is returned from last ping
+                }
+
                 var messageType = (WebSocketMessageType)WebSocketFrameOption.Ping;
-                var pingFrame = _connection.PrepareFrame(_pingBuffer, 0, true, false, messageType, WebSocketExtensionFlags.None);
-                if (await _connection.SendFrameAsync(pingFrame, TimeSpan.Zero, SendOptions.NoErrors, CancellationToken.None).ConfigureAwait(false))
-                    this._lastPong.Restart();
+                var pingFrame = this.connection.PrepareFrame(this.pingBuffer, 0, true, false, messageType, WebSocketExtensionFlags.None);
+                if (await this.connection.SendFrameAsync(pingFrame, TimeSpan.Zero, SendOptions.NoErrors, CancellationToken.None).ConfigureAwait(false))
+                    this.lastPong.Restart();
             }
             /// <inheritdoc />
             public override void NotifyActivity()
@@ -47,7 +52,7 @@ namespace vtortola.WebSockets.Rfc6455
             }
             public override void NotifyPong(ArraySegment<byte> pongBuffer)
             {
-                this._lastPong.Stop();
+                this.lastPong.Stop();
             }
         }
     }
