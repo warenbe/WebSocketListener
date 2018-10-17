@@ -55,7 +55,8 @@ namespace vtortola.WebSockets
             this.PingMode = PingMode.LatencyControl;
             this.SupportedSslProtocols = SslProtocols.Tls | SslProtocols.Tls11 | SslProtocols.Tls12;
 #if DEBUG
-            this.Logger = DebugLogger.Instance;
+            //this.Logger = DebugLogger.Instance;
+            this.Logger = FileLogger.Instance;
 #else
             this.Logger = NullLogger.Instance;
 #endif
