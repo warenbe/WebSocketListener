@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
 		<TargetFrameworks>net45;netstandard1.3</TargetFrameworks>
@@ -97,7 +97,7 @@ UNIX Domain Sockets are tested on Linux</PackageReleaseNotes>
 		</PackageReference>
 	</ItemGroup>
 
-	<Target Name="Repack" AfterTargets="BuiltProjectOutputGroup" Condition="' $(TargetFramework)'!='' ">
+	<Target Name="Repack" AfterTargets="BuiltProjectOutputGroup" Condition="' $(TargetFramework)'!='' AND '$(GeneratePackageOnBuild)' == 'true' ">
 		<GetFrameworkPath>
 			<Output TaskParameter="Path" PropertyName="FrameworkPath" />
 		</GetFrameworkPath>
