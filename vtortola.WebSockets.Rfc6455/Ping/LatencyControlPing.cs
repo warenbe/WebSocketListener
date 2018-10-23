@@ -35,7 +35,7 @@ namespace vtortola.WebSockets.Rfc6455
                 var elapsedTime = TimestampToTimeSpan(Stopwatch.GetTimestamp()) - this.lastActivityTime;
                 if (elapsedTime > this.pingTimeout)
                 {
-                    await this.connection.CloseAsync(WebSocketCloseReasons.GoingAway).ConfigureAwait(false);
+                    this.connection.latency = Timeout.InfiniteTimeSpan;
                     SafeEnd.Dispose(this.connection);
 
                     if (this.connection.log.IsDebugEnabled)
