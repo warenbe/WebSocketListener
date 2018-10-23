@@ -35,9 +35,12 @@ namespace vtortola.WebSockets.Rfc6455
                 var elapsedTime = TimestampToTimeSpan(Stopwatch.GetTimestamp()) - this.lastActivityTime;
                 if (elapsedTime > this.pingTimeout)
                 {
+                    await this.connection.CloseAsync(WebSocketCloseReasons.GoingAway).ConfigureAwait(false);
+                    SafeEnd.Dispose(this.connection);
+
                     if (this.connection.log.IsDebugEnabled)
                         this.connection.log.Debug($"WebSocket connection ({this.connection.GetHashCode():X}) has been closed due ping timeout. Time elapsed: {elapsedTime}, timeout: {this.pingTimeout}.");
-                    await this.connection.CloseAsync(WebSocketCloseReasons.GoingAway).ConfigureAwait(false);
+
                     return;
                 }
 
