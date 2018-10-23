@@ -112,10 +112,15 @@ namespace vtortola.WebSockets.Rfc6455
 
         protected override void Dispose(bool disposing)
         {
-            // don't do flush on close if connection is broken
-            if (this._webSocket.Connection.IsConnected)
+            if (Interlocked.Exchange(ref this.state, STATE_DISPOSED) == STATE_DISPOSED)
+                return;
+
+            if (this._webSocket.Connection.IsConnected == false)
+                return;
+
+            try
             {
-                var closeTask = this.CloseAsync();
+                var closeTask = this.CloseAsync(); // CloseAsync() will cause FlushAsync()
                 if (closeTask.IsCompleted == false && this._webSocket.Connection.Log.IsWarningEnabled)
                 {
                     this._webSocket.Connection.Log.Warning(
@@ -123,12 +128,12 @@ namespace vtortola.WebSockets.Rfc6455
                         $"Call and await {nameof(this.CloseAsync)}() before disposing stream.");
                 }
 
-                if (closeTask.Status != TaskStatus.RanToCompletion)
-                {
-                    closeTask.Wait(); // make exception observed
-                }
+                closeTask.Wait();
             }
-            Interlocked.Exchange(ref this.state, STATE_DISPOSED);
+            catch
+            {
+                /* ignore any close/flush error */
+            }
         }
     }
 }
