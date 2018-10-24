@@ -7,7 +7,7 @@
 https://github.com/deniszykov/WebSocketListener</Description>
 		<Company>deniszykov</Company>
 		<Product>deniszykov.WebSocketListener</Product>
-		<Version>4.2.4</Version>
+		<Version>4.2.5</Version>
 		<Authors>Valeriano Tortola, Denis Zykov</Authors>
 		<PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/deniszykov/WebSocketListener</PackageProjectUrl>
@@ -16,7 +16,14 @@ https://github.com/deniszykov/WebSocketListener</Description>
 		<PackageTags>websockets HTML5 realtime streaming sockets server client async asynchronous</PackageTags>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>..\WebSocketListener.snk</AssemblyOriginatorKeyFile>		
-		<PackageReleaseNotes>v.4.2.4
+		<PackageReleaseNotes>v.4.2.5
+fixed error in WSWriterStream.Dispose() method
+reset latency value on WS close or ping timeout
+changed WSConnection Dispose() routine. Now it is not waiting for graceful close.
+changed Ping timeout now cause WSConnection.Dispose instead on CloseAsync
+fixed Ping timeout now properly calculated based on WS activity
+
+v.4.2.4
 [Common] replaced all DynamicMethod invocation with slower reflection alternative in case AOT-only runtime.
 [WS] better error message while writing to closed stream
 [Transports] clean-up SocketAsyncEventArgs after each operation to prevent holding GC references on used buffers
