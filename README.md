@@ -164,6 +164,7 @@ using (var messageWriter = webSocket.CreateMessageWriter(WebSocketMessageType.Te
 using (var streamWriter = new StreamWriter(messageWriter, utf8NoBom))
 {
    await streamWriter.WriteAsync("Hello World!");
+   await streamWriter.FlushAsync();
    await messageWriter.CloseAsync();
 }
 ```    
