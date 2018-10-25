@@ -113,23 +113,25 @@ The client provides means to read and write messages. With the client, as in the
 
 ⚠️ You must receive messages even if you do not need them. If you do not do this, then random disconnects are possible.
 
-With the client we can *await* a message as a readonly stream:
+With the 'webSocket' we can *await* a message as a readonly stream:
 
 ```cs
-var messageReadStream = await client.ReadMessageAsync(cancellationToken);
+var messageReader = await webSocket.ReadMessageAsync(cancellationToken);
 ```
 
 Messages are a stream-like objects, so is it possible to use regular .NET framework tools to work with them. The `WebSocketMessageReadStream.MessageType` property indicates the kind of content the message contains, so it can be used to select a different handling approach.
 
 The returned `WebSocketMessageReadStream` object will contain information from the header, like type of message (Text or Binary) but not the message content, neither the message length, since a frame only contains the frame length rather than the total message length, therefore that information could be missleading.
 
-A text message can be read with a simple `StreamReader`.  It is worth remember that according to the WebSockets specs, it always uses UTF8 for text enconding:
+A text message can be read with a simple `StreamReader`.  It is worth remember that according to the WebSockets specs, it always uses UTF8-no-BOM for text enconding:
 
 ```cs
-if(messageReadStream.MessageType == WebSocketMessageType.Text)
+var utf8NoBom = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: false);
+
+if(messageReader.MessageType == WebSocketMessageType.Text)
 {
    String msgContent = String.Empty;
-   using (var reader = new StreamReader(messageReadStream, Encoding.UTF8))
+   using (var reader = new StreamReader(messageReadStream, utf8NoBom))
         msgContent = await reader.ReadToEndAsync();
 }
 ```
@@ -139,28 +141,30 @@ if(messageReadStream.MessageType == WebSocketMessageType.Text)
 Also, a binary message can be read using regular .NET techniques:
 
 ```cs
-if(messageReadStream.MessageType == WebSocketMessageType.Binary)
+if(messageReader.MessageType == WebSocketMessageType.Binary)
 {
    using (var stream = new MemoryStream())
    {
-       await messageReadStream.CopyToAsync(stream);
+       await messageReader.CopyToAsync(stream);
    }
 }
 ```
 
 #### Sending messages
-Writing messages is also easy. The `WebSocketMessageReadStream.CreateMessageWriter` method allows to create a write only  message:
+Writing messages is also easy. The `webSocket.CreateMessageWriter(WebSocketMessageType)` method allows to create a write only  message:
 
 ```cs
-using (var messageWriterStream = client.CreateMessageWriter(WebSocketMessageType.Text))
+using (var messageWriter = client.CreateMessageWriter(WebSocketMessageType.Text))
 ```
 
 Once a message writer is created, regular .NET tools can be used to write in it:
 
 ```cs
-using (var writer = new StreamWriter(messageWriterStream, Encoding.UTF8))
+using (var messageWriter = ws.CreateMessageWriter(WebSocketMessageType.Text))
+using (var streamWriter = new StreamWriter(messageWriter, utf8NoBom))
 {
-   await writer.WriteAsync("Hello World!");
+   await streamWriter.WriteAsync("Hello World!");
+   await messageWriter.CloseAsync();
 }
 ```    
 
@@ -168,7 +172,10 @@ Also binary messages:
 
 ```cs
 using (var messageWriter = ws.CreateMessageWriter(WebSocketMessageType.Binary))
+{
    await myFileStream.CopyToAsync(messageWriter);
+   await messageWriter.CloseAsync();    
+}
 ```
 
 #### Example
