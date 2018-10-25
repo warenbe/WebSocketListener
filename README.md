@@ -113,7 +113,7 @@ The client provides means to read and write messages. With the client, as in the
 
 ⚠️ You must receive messages even if you do not need them. If you do not do this, then random disconnects are possible.
 
-With the 'webSocket' we can *await* a message as a readonly stream:
+With the `webSocket` we can *await* for a message:
 
 ```cs
 var messageReader = await webSocket.ReadMessageAsync(cancellationToken);
@@ -151,16 +151,16 @@ if(messageReader.MessageType == WebSocketMessageType.Binary)
 ```
 
 #### Sending messages
-Writing messages is also easy. The `webSocket.CreateMessageWriter(WebSocketMessageType)` method allows to create a write only  message:
+Writing messages is also easy. The `webSocket.CreateMessageWriter(WebSocketMessageType)` method allows to create a write only  stream:
 
 ```cs
-using (var messageWriter = client.CreateMessageWriter(WebSocketMessageType.Text))
+using (var messageWriter = webSocket.CreateMessageWriter(WebSocketMessageType.Text))
 ```
 
 Once a message writer is created, regular .NET tools can be used to write in it:
 
 ```cs
-using (var messageWriter = ws.CreateMessageWriter(WebSocketMessageType.Text))
+using (var messageWriter = webSocket.CreateMessageWriter(WebSocketMessageType.Text))
 using (var streamWriter = new StreamWriter(messageWriter, utf8NoBom))
 {
    await streamWriter.WriteAsync("Hello World!");
@@ -171,7 +171,7 @@ using (var streamWriter = new StreamWriter(messageWriter, utf8NoBom))
 Also binary messages:
 
 ```cs
-using (var messageWriter = ws.CreateMessageWriter(WebSocketMessageType.Binary))
+using (var messageWriter = webSocket.CreateMessageWriter(WebSocketMessageType.Binary))
 {
    await myFileStream.CopyToAsync(messageWriter);
    await messageWriter.CloseAsync();    
