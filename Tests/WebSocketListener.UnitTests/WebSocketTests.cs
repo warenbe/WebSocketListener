@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Net;
 using System.Text;
@@ -272,8 +272,15 @@ namespace vtortola.WebSockets.UnitTests
             using (var connection = new DummyNetworkConnection(connectionInput, connectionOutput))
             using (var ws = new WebSocketRfc6455(connection, this.options, handshake.Request, handshake.Response, handshake.NegotiatedMessageExtensions))
             {
-                using (var writer = ws.CreateMessageWriter(WebSocketMessageType.Text)) { }
-                using (var writer = ws.CreateMessageWriter(WebSocketMessageType.Text)) { }
+                using (var writer = ws.CreateMessageWriter(WebSocketMessageType.Text))
+                {
+                    writer.CloseAsync().Wait();
+                }
+
+                using (var writer = ws.CreateMessageWriter(WebSocketMessageType.Text))
+                {
+                    writer.CloseAsync().Wait();
+                }
             }
         }
 

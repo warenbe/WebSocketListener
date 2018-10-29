@@ -24,7 +24,7 @@ namespace vtortola.WebSockets
         public WebSocketConnectionExtensionCollection ConnectionExtensions { get; private set; }
 
         public TimeSpan PingTimeout { get; set; }
-        public TimeSpan PingInterval => this.PingTimeout > TimeSpan.Zero ? TimeSpan.FromTicks(this.PingTimeout.Ticks / 2) : TimeSpan.FromSeconds(5);
+        public TimeSpan PingInterval => this.PingTimeout > TimeSpan.Zero ? TimeSpan.FromTicks(this.PingTimeout.Ticks / 3) : TimeSpan.FromSeconds(5);
 
         public int NegotiationQueueCapacity { get; set; }
         public int ParallelNegotiations { get; set; }

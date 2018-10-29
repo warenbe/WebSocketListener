@@ -52,8 +52,9 @@ namespace vtortola.WebSockets.Rfc6455
                 var count = this.pingBuffer.Array[this.pingBuffer.Offset];
                 var payload = this.pingBuffer.Skip(1);
 
+                // manual pinging is always enforces sending ping frames
                 var pingFrame = this.connection.PrepareFrame(payload, count, true, false, messageType, WebSocketExtensionFlags.None);
-                await this.connection.SendFrameAsync(pingFrame, TimeSpan.Zero, SendOptions.NoErrors, CancellationToken.None).ConfigureAwait(false);
+                await this.connection.SendFrameAsync(pingFrame, Timeout.InfiniteTimeSpan, SendOptions.NoErrors, CancellationToken.None).ConfigureAwait(false);
             }
             /// <inheritdoc />
             public override void NotifyActivity()
