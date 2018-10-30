@@ -461,6 +461,8 @@ namespace vtortola.WebSockets.Rfc6455
             if (Interlocked.Exchange(ref this.closeState, CLOSE_STATE_DISPOSED) == CLOSE_STATE_DISPOSED)
                 return;
 
+            this.latency = Timeout.InfiniteTimeSpan;
+
             SafeEnd.Dispose(this.networkConnection, this.log);
             SafeEnd.Dispose(this.writeSemaphore, this.log);
 
