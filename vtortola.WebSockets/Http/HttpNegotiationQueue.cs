@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -80,18 +81,21 @@ namespace vtortola.WebSockets.Http
             WebSocketNegotiationResult result;
             try
             {
-                var timeoutTask = Task.Delay(_options.NegotiationTimeout);
+                var negotiationTimeout = this._options.NegotiationTimeout;
 
-                foreach (var conExt in _extensions)
+                var timeoutTask = Task.Delay(negotiationTimeout);
+                var timer = Stopwatch.StartNew();
+
+                foreach (var connectionExtension in _extensions)
                 {
-                    var extTask = conExt.ExtendConnectionAsync(networkConnection);
+                    var extTask = connectionExtension.ExtendConnectionAsync(networkConnection);
                     await Task.WhenAny(timeoutTask, extTask).ConfigureAwait(false);
                     if (timeoutTask.IsCompleted)
                     {
 #pragma warning disable 4014
                         extTask.IgnoreFaultOrCancellation(); // make connection exception observed
 #pragma warning restore 4014
-                        throw new WebSocketException($"Negotiation timeout (Extension: {conExt.GetType().Name})");
+                        throw new WebSocketException($"Negotiation timeout (Extension: {connectionExtension.GetType().Name})");
                     }
 
                     networkConnection = await extTask.ConfigureAwait(false);
@@ -104,7 +108,9 @@ namespace vtortola.WebSockets.Http
 #pragma warning disable 4014
                     handshakeTask.IgnoreFaultOrCancellation(); // make connection exception observed
 #pragma warning restore 4014
-                    throw new WebSocketException("Negotiation timeout");
+                    var message = $"Negotiation timeout: {timer.ElapsedMilliseconds} ms left. Expected: not greater than {negotiationTimeout.Milliseconds} ms";
+
+                    throw new WebSocketException(message);
                 }
 
                 var handshake = await handshakeTask.ConfigureAwait(false);
