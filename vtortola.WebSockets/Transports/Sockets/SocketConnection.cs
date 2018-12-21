@@ -279,8 +279,8 @@ namespace vtortola.WebSockets.Transports.Sockets
             if (Interlocked.Exchange(ref this.closeState, STATE_DISPOSED) == STATE_DISPOSED)
                 return;
 
-            SafeEnd.Dispose(this.socket);
             SafeEnd.Dispose(this.networkStream);
+            SafeEnd.Dispose(this.socket);
 
             foreach (var socketEvent in this.socketEvents)
                 SafeEnd.Dispose(socketEvent);

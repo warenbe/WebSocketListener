@@ -14,49 +14,56 @@ namespace vtortola.WebSockets.Rfc6455
     {
         private sealed class ManualPing : PingHandler
         {
-            private readonly TimeSpan _pingTimeout;
-            private readonly ArraySegment<byte> _pingBuffer;
-            private readonly WebSocketConnectionRfc6455 _connection;
-            private readonly Stopwatch _lastPong;
+            private readonly TimeSpan pingTimeout;
+            private readonly ArraySegment<byte> pingBuffer;
+            private readonly WebSocketConnectionRfc6455 connection;
+            private TimeSpan lastActivityTime;
 
             public ManualPing(WebSocketConnectionRfc6455 connection)
             {
                 if (connection == null) throw new ArgumentNullException(nameof(connection));
 
-                _pingTimeout = connection.options.PingTimeout < TimeSpan.Zero ? TimeSpan.MaxValue : connection.options.PingTimeout;
-                _pingBuffer = connection.outPingBuffer;
-                _connection = connection;
-                _lastPong = new Stopwatch();
+                this.pingTimeout = connection.options.PingTimeout;
+                if (this.pingTimeout < TimeSpan.Zero)
+                    this.pingTimeout = TimeSpan.MaxValue;
 
+                this.pingBuffer = connection.outPingBuffer;
+                this.connection = connection;
+                this.NotifyActivity();
             }
 
             public override async Task PingAsync()
             {
-                if (this._connection.IsClosed)
+                if (this.connection.IsClosed)
                     return;
 
-                if (this._lastPong.Elapsed > this._pingTimeout)
+                var elapsedTime = TimestampToTimeSpan(Stopwatch.GetTimestamp()) - this.lastActivityTime;
+                if (elapsedTime > this.pingTimeout)
                 {
-                    await this._connection.CloseAsync(WebSocketCloseReasons.GoingAway).ConfigureAwait(false);
+                    SafeEnd.Dispose(this.connection);
+
+                    if (this.connection.log.IsDebugEnabled)
+                        this.connection.log.Debug($"WebSocket connection ({this.connection.GetHashCode():X}) has been closed due ping timeout. Time elapsed: {elapsedTime}, timeout: {this.pingTimeout}.");
+
                     return;
                 }
 
                 var messageType = (WebSocketMessageType)WebSocketFrameOption.Ping;
-                var count = this._pingBuffer.Array[this._pingBuffer.Offset];
-                var payload = this._pingBuffer.Skip(1);
+                var count = this.pingBuffer.Array[this.pingBuffer.Offset];
+                var payload = this.pingBuffer.Skip(1);
 
-                var pingFrame = _connection.PrepareFrame(payload, count, true, false, messageType, WebSocketExtensionFlags.None);
-                if (await _connection.SendFrameAsync(pingFrame, TimeSpan.Zero, SendOptions.NoErrors, CancellationToken.None).ConfigureAwait(false))
-                    this._lastPong.Restart();
+                // manual pinging is always enforces sending ping frames
+                var pingFrame = this.connection.PrepareFrame(payload, count, true, false, messageType, WebSocketExtensionFlags.None);
+                await this.connection.SendFrameAsync(pingFrame, Timeout.InfiniteTimeSpan, SendOptions.NoErrors, CancellationToken.None).ConfigureAwait(false);
             }
             /// <inheritdoc />
             public override void NotifyActivity()
             {
-
+                this.lastActivityTime = TimestampToTimeSpan(Stopwatch.GetTimestamp());
             }
             public override void NotifyPong(ArraySegment<byte> pongBuffer)
             {
-                this._lastPong.Stop();
+                this.NotifyActivity();
             }
         }
     }

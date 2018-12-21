@@ -458,16 +458,16 @@ namespace vtortola.WebSockets.Rfc6455
 
         public void Dispose()
         {
-            this.CloseAsync(WebSocketCloseReasons.NormalClose).Wait();
-
             if (Interlocked.Exchange(ref this.closeState, CLOSE_STATE_DISPOSED) == CLOSE_STATE_DISPOSED)
                 return;
 
+            this.latency = Timeout.InfiniteTimeSpan;
+
+            SafeEnd.Dispose(this.networkConnection, this.log);
+            SafeEnd.Dispose(this.writeSemaphore, this.log);
+
             this.options.BufferManager.ReturnBuffer(this.SendBuffer.Array);
             this.options.BufferManager.ReturnBuffer(this.closeBuffer.Array);
-
-            SafeEnd.Dispose(this.writeSemaphore, this.log);
-            SafeEnd.Dispose(this.networkConnection, this.log);
         }
     }
 
