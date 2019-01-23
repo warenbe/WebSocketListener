@@ -17,6 +17,8 @@ namespace vtortola.WebSockets.Rfc6455
 
         public override WebSocketMessageType MessageType { get; }
         public override WebSocketExtensionFlags Flags { get; }
+        /// <inheritdoc />
+        internal override WebSocketListenerOptions Options => this._webSocket.Connection.Options;
 
         public WebSocketMessageReadRfc6455Stream(WebSocketRfc6455 webSocket)
         {

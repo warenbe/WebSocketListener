@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -15,6 +15,8 @@ namespace vtortola.WebSockets
         public override bool CanWrite => false;
         public sealed override long Length { get { throw new NotSupportedException(); } }
         public sealed override long Position { get { throw new NotSupportedException(); } set { throw new NotSupportedException(); } }
+
+        internal abstract WebSocketListenerOptions Options { get; }
 
         public override Task FlushAsync(CancellationToken cancellationToken)
         {

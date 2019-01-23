@@ -44,6 +44,7 @@ namespace vtortola.WebSockets.Rfc6455
                 return this.latency;
             }
         }
+        public WebSocketListenerOptions Options => this.options;
 
         public WebSocketConnectionRfc6455([NotNull] NetworkConnection networkConnection, bool maskData, [NotNull] WebSocketListenerOptions options)
         {
