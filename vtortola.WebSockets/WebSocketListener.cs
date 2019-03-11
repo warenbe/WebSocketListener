@@ -1,4 +1,4 @@
-﻿/*
+/*
 	Copyright (c) 2017 Denis Zykov
 	License: https://opensource.org/licenses/MIT
 */
@@ -93,7 +93,11 @@ namespace vtortola.WebSockets
                     var listenEndPoint = this.listenEndPoints[i];
                     var transport = default(WebSocketTransport);
                     if (this.options.Transports.TryGetWebSocketTransport(listenEndPoint, out transport) == false)
-                        throw new WebSocketException($"Unable to find transport for '{listenEndPoint}'. Available transports are: {string.Join(", ", this.options.Transports.SelectMany(t => t.Schemes).Distinct())}.");
+                    {
+                        var transportSchemas = string.Join(", ", this.options.Transports.SelectMany(t => t.Schemes).Distinct());
+
+                        throw new WebSocketException($"Unable to find transport for '{listenEndPoint}'. Available transports are: {transportSchemas}.");
+                    }
 
                     endPoints[i] = Tuple.Create(listenEndPoint, transport);
                 }
