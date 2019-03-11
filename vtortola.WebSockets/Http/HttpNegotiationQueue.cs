@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -84,7 +83,7 @@ namespace vtortola.WebSockets.Http
                 var negotiationTimeout = this._options.NegotiationTimeout;
 
                 var timeoutTask = Task.Delay(negotiationTimeout);
-                var timer = Stopwatch.StartNew();
+                var startTime = DateTime.UtcNow;
 
                 foreach (var connectionExtension in _extensions)
                 {
@@ -108,7 +107,7 @@ namespace vtortola.WebSockets.Http
 #pragma warning disable 4014
                     handshakeTask.IgnoreFaultOrCancellation(); // make connection exception observed
 #pragma warning restore 4014
-                    var message = $"Negotiation timeout: {timer.ElapsedMilliseconds} ms left. Expected: not greater than {negotiationTimeout.Milliseconds} ms";
+                    var message = $"Negotiation timeout: {(DateTime.UtcNow - startTime).TotalMilliseconds:F0} ms left. Expected: not greater than {negotiationTimeout.Milliseconds} ms";
 
                     throw new WebSocketException(message);
                 }
