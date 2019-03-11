@@ -1,5 +1,6 @@
-﻿using System.Collections;
+using System.Collections;
 using vtortola.WebSockets.Rfc6455;
+using vtortola.WebSockets.Rfc6455.Header;
 using Xunit;
 
 namespace vtortola.WebSockets.UnitTests

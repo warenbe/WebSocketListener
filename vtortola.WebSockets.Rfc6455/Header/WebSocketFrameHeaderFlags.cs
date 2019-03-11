@@ -1,21 +1,21 @@
 using System.Text;
 using vtortola.WebSockets.Tools;
 
-namespace vtortola.WebSockets.Rfc6455
+namespace vtortola.WebSockets.Rfc6455.Header
 {
     internal sealed class WebSocketFrameHeaderFlags
     {
         private byte _byte1, _byte2;
 
-        public bool FIN { get { return GetBit(_byte1, 7); } private set { SetBit(ref _byte1, 7, value); } }
-        public bool RSV1 { get { return GetBit(_byte1, 6); } private set { SetBit(ref _byte1, 6, value); } }
-        public bool RSV2 { get { return GetBit(_byte1, 5); } private set { SetBit(ref _byte1, 5, value); } }
-        public bool RSV3 { get { return GetBit(_byte1, 4); } private set { SetBit(ref _byte1, 4, value); } }
-        public bool OPT4 { get { return GetBit(_byte1, 3); } private set { SetBit(ref _byte1, 3, value); } }
-        public bool OPT3 { get { return GetBit(_byte1, 2); } private set { SetBit(ref _byte1, 2, value); } }
-        public bool OPT2 { get { return GetBit(_byte1, 1); } private set { SetBit(ref _byte1, 1, value); } }
-        public bool OPT1 { get { return GetBit(_byte1, 0); } private set { SetBit(ref _byte1, 0, value); } }
-        public bool MASK { get { return GetBit(_byte2, 7); } private set { SetBit(ref _byte2, 7, value); } }
+        public bool FIN { get { return GetBit(this._byte1, 7); } private set { SetBit(ref this._byte1, 7, value); } }
+        public bool RSV1 { get { return GetBit(this._byte1, 6); } private set { SetBit(ref this._byte1, 6, value); } }
+        public bool RSV2 { get { return GetBit(this._byte1, 5); } private set { SetBit(ref this._byte1, 5, value); } }
+        public bool RSV3 { get { return GetBit(this._byte1, 4); } private set { SetBit(ref this._byte1, 4, value); } }
+        public bool OPT4 { get { return GetBit(this._byte1, 3); } private set { SetBit(ref this._byte1, 3, value); } }
+        public bool OPT3 { get { return GetBit(this._byte1, 2); } private set { SetBit(ref this._byte1, 2, value); } }
+        public bool OPT2 { get { return GetBit(this._byte1, 1); } private set { SetBit(ref this._byte1, 1, value); } }
+        public bool OPT1 { get { return GetBit(this._byte1, 0); } private set { SetBit(ref this._byte1, 0, value); } }
+        public bool MASK { get { return GetBit(this._byte2, 7); } private set { SetBit(ref this._byte2, 7, value); } }
 
         public WebSocketFrameOption Option { get; }
 
@@ -65,17 +65,17 @@ namespace vtortola.WebSockets.Rfc6455
         }
         private WebSocketFrameHeaderFlags(byte byte1, byte byte2, WebSocketFrameOption option)
         {
-            _byte1 = byte1;
-            _byte2 = byte2;
-            Option = option;
+            this._byte1 = byte1;
+            this._byte2 = byte2;
+            this.Option = option;
         }
         public WebSocketFrameHeaderFlags(bool isComplete, bool isMasked, WebSocketFrameOption option, WebSocketExtensionFlags extensionFlags)
         {
             this.Option = option;
-            _byte1 = new byte();
-            _byte2 = new byte();
+            this._byte1 = new byte();
+            this._byte2 = new byte();
 
-            SetBit(ref _byte1, 7, isComplete);
+            SetBit(ref this._byte1, 7, isComplete);
 
             this.RSV1 = extensionFlags.Rsv1;
             this.RSV2 = extensionFlags.Rsv2;
@@ -116,19 +116,19 @@ namespace vtortola.WebSockets.Rfc6455
             else
                 throw new WebSocketException("Cannot create a header with a length of " + payloadLength);
 
-            buffer[offset] = _byte1;
-            buffer[offset + 1] = (byte)(_byte2 + headerLength);
+            buffer[offset] = this._byte1;
+            buffer[offset + 1] = (byte)(this._byte2 + headerLength);
         }
 
         /// <inheritdoc />
         public override string ToString()
         {
             var sb = new StringBuilder();
-            if (FIN) sb.Append("FIN,");
-            if (RSV1) sb.Append("RSV1,");
-            if (RSV2) sb.Append("RSV2,");
-            if (RSV3) sb.Append("RSV3,");
-            if (MASK) sb.Append("MASK,");
+            if (this.FIN) sb.Append("FIN,");
+            if (this.RSV1) sb.Append("RSV1,");
+            if (this.RSV2) sb.Append("RSV2,");
+            if (this.RSV3) sb.Append("RSV3,");
+            if (this.MASK) sb.Append("MASK,");
             if (sb.Length > 0)
                 sb.Length--;
             return sb.ToString();
