@@ -84,6 +84,11 @@ namespace vtortola.WebSockets.Rfc6455
             return this.Connection.CloseAsync(WebSocketCloseReasons.NormalClose);
         }
 
+        public override Task CloseAsync(int closeReason)
+        {
+            return this.Connection.CloseAsync((WebSocketCloseReasons)closeReason);
+        }
+
         public override void Dispose()
         {
             SafeEnd.Dispose(this.Connection, this.log);

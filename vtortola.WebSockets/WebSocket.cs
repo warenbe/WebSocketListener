@@ -42,7 +42,10 @@ namespace vtortola.WebSockets
         }
 
         public abstract Task SendPingAsync(byte[] data, int offset, int count);
+
         public abstract Task CloseAsync();
+
+        public abstract Task CloseAsync(int closeCode);
 
         public abstract void Dispose();
 
