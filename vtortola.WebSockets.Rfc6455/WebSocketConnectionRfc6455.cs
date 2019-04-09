@@ -29,12 +29,14 @@ namespace vtortola.WebSockets.Rfc6455
         private readonly PingHandler pingHandler;
         private readonly bool maskData;
         public volatile WebSocketFrameHeader CurrentHeader;
+        public WebSocketCloseReason? CloseReason;
         private volatile int ongoingMessageWrite, ongoingMessageAwaiting, closeState;
         private TimeSpan latency;
 
         public ILogger Log => this.log;
         public bool IsConnected => this.closeState == CLOSE_STATE_OPEN;
         public bool IsClosed => this.closeState >= CLOSE_STATE_CLOSED;
+         
         public TimeSpan Latency
         {
             get
@@ -139,7 +141,7 @@ namespace vtortola.WebSockets.Rfc6455
                             if (this.log.IsDebugEnabled)
                                 this.log.Debug($"({this.GetHashCode():X}) Connection has been closed while async awaiting header.");
                         }
-                        await this.CloseAsync(WebSocketCloseReasons.ProtocolError).ConfigureAwait(false);
+                        await this.CloseAsync(WebSocketCloseReason.ProtocolError).ConfigureAwait(false);
                         return;
                     }
 
@@ -156,7 +158,7 @@ namespace vtortola.WebSockets.Rfc6455
                     this.log.Debug($"({this.GetHashCode():X}) An error occurred while async awaiting header.", awaitHeaderErrorUnwrap);
 
                 if (this.IsConnected)
-                    await this.CloseAsync(WebSocketCloseReasons.ProtocolError).ConfigureAwait(false);
+                    await this.CloseAsync(WebSocketCloseReason.ProtocolError).ConfigureAwait(false);
 
                 if (awaitHeaderErrorUnwrap is WebSocketException == false && awaitHeaderErrorUnwrap is OperationCanceledException == false)
                     throw new WebSocketException("Read operation on WebSocket stream is failed. More detailed information in inner exception.", awaitHeaderErrorUnwrap);
@@ -195,7 +197,7 @@ namespace vtortola.WebSockets.Rfc6455
                     this.log.Debug($"({this.GetHashCode():X}) An error occurred while async reading from WebSocket.", readErrorUnwrap);
 
                 if (this.IsConnected)
-                    await this.CloseAsync(WebSocketCloseReasons.UnexpectedCondition).ConfigureAwait(false);
+                    await this.CloseAsync(WebSocketCloseReason.UnexpectedCondition).ConfigureAwait(false);
 
                 if (readErrorUnwrap is WebSocketException == false && readErrorUnwrap is OperationCanceledException == false)
                     throw new WebSocketException("Read operation on WebSocket stream is failed: " + readErrorUnwrap.Message, readErrorUnwrap);
@@ -287,7 +289,7 @@ namespace vtortola.WebSockets.Rfc6455
                     this.log.Debug($"({this.GetHashCode():X}) Write operation on WebSocket stream is failed.", writeErrorUnwrap);
 
                 if (this.IsConnected)
-                    await this.CloseAsync(WebSocketCloseReasons.UnexpectedCondition).ConfigureAwait(false);
+                    await this.CloseAsync(WebSocketCloseReason.UnexpectedCondition).ConfigureAwait(false);
 
                 if (writeErrorUnwrap is WebSocketException == false && writeErrorUnwrap is OperationCanceledException == false)
                     throw new WebSocketException("Write operation on WebSocket stream is failed: " + writeErrorUnwrap.Message, writeErrorUnwrap);
@@ -303,7 +305,7 @@ namespace vtortola.WebSockets.Rfc6455
                 if (this.log.IsWarningEnabled)
                     this.log.Warning($"{nameof(this.ParseHeaderAsync)} is called with only {read} bytes buffer. Minimal is 2 bytes.");
 
-                await this.CloseAsync(WebSocketCloseReasons.ProtocolError).ConfigureAwait(false);
+                await this.CloseAsync(WebSocketCloseReason.ProtocolError).ConfigureAwait(false);
                 return;
             }
 
@@ -314,7 +316,7 @@ namespace vtortola.WebSockets.Rfc6455
                 if (this.log.IsWarningEnabled)
                     this.log.Warning($"{nameof(this.ParseHeaderAsync)} is called with {read} bytes buffer. While whole header is {headerLength} bytes length.");
 
-                await this.CloseAsync(WebSocketCloseReasons.ProtocolError).ConfigureAwait(false);
+                await this.CloseAsync(WebSocketCloseReason.ProtocolError).ConfigureAwait(false);
                 return;
             }
 
@@ -356,6 +358,33 @@ namespace vtortola.WebSockets.Rfc6455
 
                 case WebSocketFrameOption.ConnectionClose:
                     Interlocked.CompareExchange(ref this.closeState, CLOSE_STATE_CLOSED, CLOSE_STATE_OPEN);
+                    
+                    const int CLOSE_BYTES_TO_READ = 2;
+                    var closeMessageOffset = 0;
+                    while (closeMessageOffset < CLOSE_BYTES_TO_READ)
+                    {
+                        var closeBytesRead = await this.networkConnection.ReadAsync
+                        (
+                            this.closeBuffer.Array, 
+                            this.closeBuffer.Offset + closeMessageOffset, 
+                            CLOSE_BYTES_TO_READ - closeMessageOffset, 
+                            CancellationToken.None
+                        ).ConfigureAwait(false);
+                        
+                        if (closeBytesRead == 0)
+                        {
+                            break; // connection closed, no more data
+                        }
+                        
+                        closeMessageOffset += closeBytesRead;
+                    }
+                    
+                    if (closeMessageOffset >= CLOSE_BYTES_TO_READ)
+                    {
+                        Array.Reverse(this.closeBuffer.Array, this.closeBuffer.Offset, CLOSE_BYTES_TO_READ);
+                        this.CloseReason = (WebSocketCloseReason)BitConverter.ToUInt16(this.closeBuffer.Array, this.closeBuffer.Offset);
+                    }
+                    
                     this.Dispose();
                     break;
 
@@ -402,7 +431,7 @@ namespace vtortola.WebSockets.Rfc6455
             }
         }
 
-        public async Task CloseAsync(WebSocketCloseReasons reason)
+        public async Task CloseAsync(WebSocketCloseReason reason)
         {
             if (Interlocked.CompareExchange(ref this.closeState, CLOSE_STATE_CLOSED, CLOSE_STATE_OPEN) != CLOSE_STATE_OPEN)
                 return;
@@ -410,7 +439,6 @@ namespace vtortola.WebSockets.Rfc6455
             await this.writeSemaphore.WaitAsync().ConfigureAwait(false);
             try
             {
-
                 ((ushort)reason).ToBytesBackwards(this.closeBuffer.Array, this.closeBuffer.Offset);
                 var messageType = (WebSocketMessageType)WebSocketFrameOption.ConnectionClose;
                 var closeFrame = this.PrepareFrame(this.closeBuffer, 2, true, false, messageType, WebSocketExtensionFlags.None);
