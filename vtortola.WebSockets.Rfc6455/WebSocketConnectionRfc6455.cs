@@ -29,13 +29,14 @@ namespace vtortola.WebSockets.Rfc6455
         private readonly PingHandler pingHandler;
         private readonly bool maskData;
         public volatile WebSocketFrameHeader CurrentHeader;
+        public WebSocketCloseReason? CloseReason;
         private volatile int ongoingMessageWrite, ongoingMessageAwaiting, closeState;
         private TimeSpan latency;
 
         public ILogger Log => this.log;
         public bool IsConnected => this.closeState == CLOSE_STATE_OPEN;
         public bool IsClosed => this.closeState >= CLOSE_STATE_CLOSED;
-        public WebSocketCloseReason CloseReason => (WebSocketCloseReason)BitConverter.ToUInt16(this.closeBuffer.Array, this.closeBuffer.Offset);
+         
         public TimeSpan Latency
         {
             get
@@ -357,10 +358,31 @@ namespace vtortola.WebSockets.Rfc6455
 
                 case WebSocketFrameOption.ConnectionClose:
                     Interlocked.CompareExchange(ref this.closeState, CLOSE_STATE_CLOSED, CLOSE_STATE_OPEN);
-
-                    _ = await ReceiveAsync(this.closeBuffer.Array, this.closeBuffer.Offset, this.closeBuffer.Count, CancellationToken.None);
-                    Array.Reverse(this.closeBuffer.Array, this.closeBuffer.Offset, this.closeBuffer.Count);
-
+                    
+                    const CLOSE_BYTES_TO_READ = 2;
+                    var closeMessageOffset = 0;
+                    while (closeMessageOffset < CLOSE_BYTES_TO_READ)
+                    {
+                        var read = await this.networkConnection.ReadAsync
+                        (
+                            this.closeBuffer.Array, 
+                            this.closeBuffer.Offset + closeMessageOffset, 
+                            CLOSE_BYTES_TO_READ - closeMessageOffset, 
+                            CancellationToken.None
+                        ).ConfigureAwait(false);
+                        if (read == 0)
+                        {
+                            break; // connection closed, no more data
+                        }
+                        closeMessageOffset += read;
+                    }
+                    
+                    if (closeMessageOffset >= CLOSE_BYTES_TO_READ)
+                    {
+                        Array.Reverse(this.closeBuffer.Array, this.closeBuffer.Offset, CLOSE_BYTES_TO_READ);
+                        this.CloseReason = (WebSocketCloseReason)BitConverter.ToUInt16(this.closeBuffer.Array, this.closeBuffer.Offset);
+                    }
+                    
                     this.Dispose();
                     break;
 
