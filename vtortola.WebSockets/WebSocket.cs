@@ -20,7 +20,7 @@ namespace vtortola.WebSockets
         public abstract EndPoint LocalEndpoint { get; }
         public abstract TimeSpan Latency { get; }
         public abstract string SubProtocol { get; }
-        public abstract Nullable<WebSocketCloseReason> CloseReason { get; }
+        public abstract WebSocketCloseReason? CloseReason { get; }
 
         protected WebSocket([NotNull] WebSocketHttpRequest request, [NotNull] WebSocketHttpResponse response)
         {
