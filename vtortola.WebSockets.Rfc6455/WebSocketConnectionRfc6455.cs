@@ -359,7 +359,7 @@ namespace vtortola.WebSockets.Rfc6455
                 case WebSocketFrameOption.ConnectionClose:
                     Interlocked.CompareExchange(ref this.closeState, CLOSE_STATE_CLOSED, CLOSE_STATE_OPEN);
                     
-                    const CLOSE_BYTES_TO_READ = 2;
+                    const int CLOSE_BYTES_TO_READ = 2;
                     var closeMessageOffset = 0;
                     while (closeMessageOffset < CLOSE_BYTES_TO_READ)
                     {
@@ -370,10 +370,12 @@ namespace vtortola.WebSockets.Rfc6455
                             CLOSE_BYTES_TO_READ - closeMessageOffset, 
                             CancellationToken.None
                         ).ConfigureAwait(false);
+                        
                         if (read == 0)
                         {
                             break; // connection closed, no more data
                         }
+                        
                         closeMessageOffset += read;
                     }
                     
