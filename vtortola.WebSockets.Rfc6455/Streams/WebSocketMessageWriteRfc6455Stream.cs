@@ -144,7 +144,7 @@ namespace vtortola.WebSockets.Rfc6455
             {
                 this.webSocket.Connection.Log.Warning($"Disposed() is called on non-closed {this.GetType()}. Call {nameof(this.CloseAsync)}() or {nameof(this.WriteAndCloseAsync)}() " +
                     "before disposing stream or connections will randomly break.");
-                this.webSocket.Connection.CloseAsync(WebSocketCloseReasons.ProtocolError).Wait();
+                this.webSocket.Connection.CloseAsync(WebSocketCloseReason.ProtocolError).Wait();
             }
         }
     }
