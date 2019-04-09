@@ -363,7 +363,7 @@ namespace vtortola.WebSockets.Rfc6455
                     var closeMessageOffset = 0;
                     while (closeMessageOffset < CLOSE_BYTES_TO_READ)
                     {
-                        var read = await this.networkConnection.ReadAsync
+                        var closeBytesRead = await this.networkConnection.ReadAsync
                         (
                             this.closeBuffer.Array, 
                             this.closeBuffer.Offset + closeMessageOffset, 
@@ -371,12 +371,12 @@ namespace vtortola.WebSockets.Rfc6455
                             CancellationToken.None
                         ).ConfigureAwait(false);
                         
-                        if (read == 0)
+                        if (closeBytesRead == 0)
                         {
                             break; // connection closed, no more data
                         }
                         
-                        closeMessageOffset += read;
+                        closeMessageOffset += closeBytesRead;
                     }
                     
                     if (closeMessageOffset >= CLOSE_BYTES_TO_READ)
