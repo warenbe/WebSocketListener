@@ -21,6 +21,9 @@ namespace vtortola.WebSockets.Rfc6455
         public override bool IsConnected => this.Connection.IsConnected;
         public override TimeSpan Latency => this.Connection.Latency;
         public override string SubProtocol { get; }
+        public override Nullable<WebSocketCloseReason> CloseReason => this.Connection.CloseReason == default(WebSocketCloseReason)
+            ? default(Nullable<WebSocketCloseReason>)
+            : this.Connection.CloseReason;
 
         public WebSocketRfc6455([NotNull] NetworkConnection networkConnection, [NotNull] WebSocketListenerOptions options, [NotNull] WebSocketHttpRequest httpRequest, [NotNull] WebSocketHttpResponse httpResponse, [NotNull] IReadOnlyList<IWebSocketMessageExtensionContext> extensions)
             : base(httpRequest, httpResponse)
@@ -81,12 +84,12 @@ namespace vtortola.WebSockets.Rfc6455
 
         public override Task CloseAsync()
         {
-            return this.Connection.CloseAsync(WebSocketCloseReasons.NormalClose);
+            return this.Connection.CloseAsync(WebSocketCloseReason.NormalClose);
         }
 
-        public override Task CloseAsync(int closeReason)
+        public override Task CloseAsync(WebSocketCloseReason closeReason)
         {
-            return this.Connection.CloseAsync((WebSocketCloseReasons)closeReason);
+            return this.Connection.CloseAsync(closeReason);
         }
 
         public override void Dispose()

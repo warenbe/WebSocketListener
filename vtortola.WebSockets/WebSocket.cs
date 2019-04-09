@@ -20,6 +20,7 @@ namespace vtortola.WebSockets
         public abstract EndPoint LocalEndpoint { get; }
         public abstract TimeSpan Latency { get; }
         public abstract string SubProtocol { get; }
+        public abstract Nullable<WebSocketCloseReason> CloseReason { get; }
 
         protected WebSocket([NotNull] WebSocketHttpRequest request, [NotNull] WebSocketHttpResponse response)
         {
@@ -45,7 +46,7 @@ namespace vtortola.WebSockets
 
         public abstract Task CloseAsync();
 
-        public abstract Task CloseAsync(int closeCode);
+        public abstract Task CloseAsync(WebSocketCloseReason closeCode);
 
         public abstract void Dispose();
 
