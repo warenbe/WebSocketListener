@@ -41,5 +41,23 @@ namespace vtortola.WebSockets
                 await msg.CloseAsync().ConfigureAwait(false);
             }
         }
+
+        public static async Task WriteBytesAsync([NotNull] this WebSocket webSocket, [NotNull] byte[] data, int offset, int count, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (webSocket == null) throw new ArgumentNullException(nameof(webSocket));
+            if (data == null) throw new ArgumentNullException(nameof(data));
+            if (offset < 0) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (count < 0) throw new ArgumentOutOfRangeException(nameof(count));
+            if (offset + count > data.Length) throw new ArgumentOutOfRangeException(nameof(count));
+
+            cancellationToken.ThrowIfCancellationRequested();
+
+            using (var writer = webSocket.CreateMessageWriter(WebSocketMessageType.Text))
+            {
+                await writer.WriteAsync(data, offset, count, cancellationToken).ConfigureAwait(false);
+                await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                await writer.CloseAsync().ConfigureAwait(false);
+            }
+        }
     }
 }
