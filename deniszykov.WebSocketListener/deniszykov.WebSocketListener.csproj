@@ -7,7 +7,7 @@
 https://github.com/deniszykov/WebSocketListener</Description>
 		<Company>deniszykov</Company>
 		<Product>deniszykov.WebSocketListener</Product>
-		<Version>4.2.6-alpha</Version>
+		<Version>4.2.7-alpha</Version>
 		<Authors>Valeriano Tortola, Denis Zykov</Authors>
 		<PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/deniszykov/WebSocketListener</PackageProjectUrl>
@@ -16,7 +16,15 @@ https://github.com/deniszykov/WebSocketListener</Description>
 		<PackageTags>websockets HTML5 realtime streaming sockets server client async asynchronous</PackageTags>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>..\WebSocketListener.snk</AssemblyOriginatorKeyFile>		
-		<PackageReleaseNotes>v.4.2.6
+		<PackageReleaseNotes>v.4.2.7
+[WS] added WriteAndCloseAsync to WebSocketWriteStream
+[Compression] added custom async inflater/deflater in WS deflate extension. This would allow make inflation/deflation during WriteAsync/ReadAsync
+[WS] replaced extra allocation of Stopwatch with less precise DateTime when measuring negotiation queue
+[WS] add int overload to CloseAsync()
+[WS] Expose client close codes
+
+
+v.4.2.6
 [WS] fixed ping timeout error on busy WebSockets
 
 v.4.2.5
