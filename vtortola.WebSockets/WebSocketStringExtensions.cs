@@ -42,6 +42,13 @@ namespace vtortola.WebSockets
             }
         }
 
+        public static Task WriteBytesAsync([NotNull] this WebSocket webSocket, [NotNull] byte[] data, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            if (data == null) throw new ArgumentNullException(nameof(data));
+
+            return WriteBytesAsync(webSocket, data, 0, data.Length, cancellationToken);
+        }
+
         public static async Task WriteBytesAsync([NotNull] this WebSocket webSocket, [NotNull] byte[] data, int offset, int count, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (webSocket == null) throw new ArgumentNullException(nameof(webSocket));
