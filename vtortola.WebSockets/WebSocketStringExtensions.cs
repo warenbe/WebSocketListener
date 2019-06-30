@@ -78,7 +78,7 @@ namespace vtortola.WebSockets
 
             cancellationToken.ThrowIfCancellationRequested();
 
-            using (var writer = webSocket.CreateMessageWriter(WebSocketMessageType.Text))
+            using (var writer = webSocket.CreateMessageWriter(WebSocketMessageType.Binary))
             {
                 await writer.WriteAndCloseAsync(data, offset, count, cancellationToken).ConfigureAwait(false);
             }
