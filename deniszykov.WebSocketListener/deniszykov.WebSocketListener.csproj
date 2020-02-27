@@ -7,7 +7,7 @@
 https://github.com/deniszykov/WebSocketListener</Description>
 		<Company>deniszykov</Company>
 		<Product>deniszykov.WebSocketListener</Product>
-		<Version>4.2.7-beta</Version>
+		<Version>4.2.8-beta</Version>
 		<Authors>Valeriano Tortola, Denis Zykov</Authors>
 		<PackageLicenseUrl>https://opensource.org/licenses/MIT</PackageLicenseUrl>
 		<PackageProjectUrl>https://github.com/deniszykov/WebSocketListener</PackageProjectUrl>
@@ -16,7 +16,10 @@ https://github.com/deniszykov/WebSocketListener</Description>
 		<PackageTags>websockets HTML5 realtime streaming sockets server client async asynchronous</PackageTags>
 		<SignAssembly>True</SignAssembly>
 		<AssemblyOriginatorKeyFile>..\WebSocketListener.snk</AssemblyOriginatorKeyFile>		
-		<PackageReleaseNotes>v.4.2.7
+		<PackageReleaseNotes>v.4.2.8
+fix LocalEndPoint value on WebSocketConnectionRfc6455
+
+v.4.2.7
 [WS] added WriteAndCloseAsync to WebSocketWriteStream
 [Compression] added custom async inflater/deflater in WS deflate extension. This would allow make inflation/deflation during WriteAsync/ReadAsync
 [WS] replaced extra allocation of Stopwatch with less precise DateTime when measuring negotiation queue
