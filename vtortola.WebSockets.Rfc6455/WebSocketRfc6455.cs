@@ -35,7 +35,7 @@ namespace vtortola.WebSockets.Rfc6455
             this.log = options.Logger;
 
             this.RemoteEndpoint = httpRequest.RemoteEndPoint;
-            this.LocalEndpoint = httpRequest.RemoteEndPoint;
+            this.LocalEndpoint = httpRequest.LocalEndPoint;
 
             this.Connection = new WebSocketConnectionRfc6455(networkConnection, httpRequest.Direction == HttpRequestDirection.Outgoing, options);
             this.extensions = extensions;
