@@ -1,7 +1,7 @@
 using System;
+using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
-using ICSharpCode.SharpZipLib.Zip.Compression;
 using JetBrains.Annotations;
 using vtortola.WebSockets.Tools;
 
@@ -14,9 +14,7 @@ namespace vtortola.WebSockets.Deflate
         private const int STATE_DISPOSED = 2;
 
         private readonly WebSocketMessageReadStream innerStream;
-        private readonly BufferManager bufferManager;
-        private readonly Inflater inflater;
-        private readonly byte[] inflaterBuffer;
+        readonly DeflateStream deflateStream;
         private volatile int state = STATE_OPEN;
 
         public override WebSocketMessageType MessageType => this.innerStream.MessageType;
@@ -30,45 +28,16 @@ namespace vtortola.WebSockets.Deflate
             if (innerStream == null) throw new ArgumentNullException(nameof(innerStream));
 
             this.innerStream = innerStream;
-            this.bufferManager = innerStream.Options.BufferManager;
-            this.inflaterBuffer = this.bufferManager.TakeBuffer(this.bufferManager.LargeBufferSize);
-            this.inflater = new Inflater(noHeader: false);
+            this.deflateStream = new DeflateStream(innerStream, CompressionMode.Decompress, leaveOpen: true);
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        /// <inheritdoc />
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-            if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
-            if (count <= 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
-
-            if (this.inflater.IsFinished)
-            {
-                return 0;
-            }
-
-            var totalBytesInflated = 0;
-            while (this.inflater.IsNeedingInput && count > 0)
-            {
-                var read = await this.innerStream.ReadAsync(this.inflaterBuffer, 0, this.inflaterBuffer.Length, cancellationToken).ConfigureAwait(false);
-                if (read == 0)
-                {
-                    return 0;
-                }
-                this.inflater.SetInput(this.inflaterBuffer, 0, read);
-
-                var inflatedBytes = 0;
-                do
-                {
-                    inflatedBytes = this.inflater.Inflate(buffer, offset, count);
-                    offset += inflatedBytes;
-                    count -= inflatedBytes;
-                    totalBytesInflated += inflatedBytes;
-                } while (!this.inflater.IsFinished && inflatedBytes > 0 && count > 0);
-            }
-
-            return totalBytesInflated;
+            return this.deflateStream.ReadAsync(buffer, offset, count, cancellationToken);
         }
 
+        /// <inheritdoc />
         public override Task CloseAsync()
         {
             if (Interlocked.CompareExchange(ref this.state, STATE_CLOSED, STATE_OPEN) != STATE_OPEN)
@@ -79,6 +48,7 @@ namespace vtortola.WebSockets.Deflate
             return this.innerStream.CloseAsync();
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
             if (Interlocked.Exchange(ref this.state, STATE_DISPOSED) == STATE_DISPOSED)
@@ -86,9 +56,8 @@ namespace vtortola.WebSockets.Deflate
                 return;
             }
 
+            SafeEnd.Dispose(this.deflateStream);
             SafeEnd.Dispose(this.innerStream);
-
-            this.bufferManager.ReturnBuffer(this.inflaterBuffer);
         }
     }
 }

@@ -4,6 +4,7 @@
 */
 using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -284,6 +285,64 @@ namespace vtortola.WebSockets
                 }
 
                 handshake.Response.ThrowIfInvalid(handshake.ComputeHandshake());
+            }
+
+            ParseWebSocketExtensions(handshake);
+            SelectExtensions(handshake);
+        }
+
+        private void SelectExtensions(WebSocketHandshake handshake)
+        {
+            if (handshake == null) throw new ArgumentNullException(nameof(handshake));
+
+            foreach (var responseExtension in handshake.Response.WebSocketExtensions)
+            {
+                var extension = handshake.Factory.MessageExtensions.SingleOrDefault(x => x.Name.Equals(responseExtension.Name, StringComparison.OrdinalIgnoreCase));
+                if (extension != null)
+                {
+                    IWebSocketMessageExtensionContext context;
+                    WebSocketExtension extensionResponse;
+                    if (extension.TryNegotiate(handshake.Request, out extensionResponse, out context))
+                    {
+                        handshake.NegotiatedMessageExtensions.Add(context);
+                    }
+                }
+            }
+        }
+
+        private void ParseWebSocketExtensions(WebSocketHandshake handshake)
+        {
+            if (handshake == null) throw new ArgumentNullException(nameof(handshake));
+
+            var requestHeaders = handshake.Response.Headers;
+            if (!requestHeaders.Contains(ResponseHeader.WebSocketExtensions))
+            {
+                return;
+            }
+
+            foreach (var extension in requestHeaders.GetValues(ResponseHeader.WebSocketExtensions))
+            {
+                var extensionOptions = new List<WebSocketExtensionOption>();
+                var extensionName = default(string);
+                foreach (var option in HeadersHelper.SplitAndTrimKeyValue(extension, options: StringSplitOptions.RemoveEmptyEntries))
+                {
+                    if (extensionName == default(string))
+                    {
+                        extensionName = option.Value;
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(option.Key))
+                        extensionOptions.Add(new WebSocketExtensionOption(option.Value, clientAvailableOption: true));
+                    else
+                        extensionOptions.Add(new WebSocketExtensionOption(option.Key, option.Value));
+                }
+
+                if (string.IsNullOrEmpty(extensionName))
+                    throw new WebSocketException(
+                        $"Wrong value '{requestHeaders[ResponseHeader.WebSocketExtensions]}' of {Headers<ResponseHeader>.GetHeaderName(ResponseHeader.WebSocketExtensions)} header in request.");
+
+                handshake.Response.WebSocketExtensions.Add(new WebSocketExtension(extensionName, extensionOptions));
             }
         }
     }
