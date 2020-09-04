@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Threading;
@@ -16,6 +16,8 @@ namespace vtortola.WebSockets
         public sealed override long Length { get { throw new NotSupportedException(); } }
         public sealed override long Position { get { throw new NotSupportedException(); } set { throw new NotSupportedException(); } }
 
+        internal abstract WebSocketListenerOptions Options { get; }
+
         public override Task FlushAsync(CancellationToken cancellationToken)
         {
             return TaskHelper.CompletedTask;
@@ -25,52 +27,52 @@ namespace vtortola.WebSockets
         public abstract override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken);
 
 #if !NETSTANDARD && !UAP
-		public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-			if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
-			if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
-            
-			if (callback != null || state != null)
-			{
-				var completionSource = new TaskCompletionSource<int>(state);
-				this.ReadAsync(buffer, offset, count, CancellationToken.None).PropagateResultTo(completionSource);
-				if (callback != null)
-					completionSource.Task.ContinueWith((t, s) => ((AsyncCallback)s).Invoke(t), callback, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-				return completionSource.Task;
-			}
-			else
-			{
-				return this.ReadAsync(buffer, offset, count, CancellationToken.None);
-			}
-		}
-		public sealed override int EndRead(IAsyncResult asyncResult)
-		{
-			return ((Task<int>)asyncResult).Result;
-		}
-		public sealed override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
-		{
-			if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-			if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
-			if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+        public sealed override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        {
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+            if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
 
-			if (callback != null || state != null)
-			{
-				var completionSource = new TaskCompletionSource<bool>(state);
-				this.WriteAsync(buffer, offset, count, CancellationToken.None).PropagateResultTo(completionSource);
-				if (callback != null)
-					completionSource.Task.ContinueWith((t, s) => ((AsyncCallback)s).Invoke(t), callback, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
-				return completionSource.Task;
-			}
-			else
-			{
-				return this.WriteAsync(buffer, offset, count, CancellationToken.None);
-			}
-		}
-		public sealed override void EndWrite(IAsyncResult asyncResult)
-		{
-			((Task)asyncResult).Wait();
-		}
+            if (callback != null || state != null)
+            {
+                var completionSource = new TaskCompletionSource<int>(state);
+                this.ReadAsync(buffer, offset, count, CancellationToken.None).PropagateResultTo(completionSource);
+                if (callback != null)
+                    completionSource.Task.ContinueWith((t, s) => ((AsyncCallback)s).Invoke(t), callback, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                return completionSource.Task;
+            }
+            else
+            {
+                return this.ReadAsync(buffer, offset, count, CancellationToken.None);
+            }
+        }
+        public sealed override int EndRead(IAsyncResult asyncResult)
+        {
+            return ((Task<int>)asyncResult).Result;
+        }
+        public sealed override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
+        {
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+            if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+
+            if (callback != null || state != null)
+            {
+                var completionSource = new TaskCompletionSource<bool>(state);
+                this.WriteAsync(buffer, offset, count, CancellationToken.None).PropagateResultTo(completionSource);
+                if (callback != null)
+                    completionSource.Task.ContinueWith((t, s) => ((AsyncCallback)s).Invoke(t), callback, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                return completionSource.Task;
+            }
+            else
+            {
+                return this.WriteAsync(buffer, offset, count, CancellationToken.None);
+            }
+        }
+        public sealed override void EndWrite(IAsyncResult asyncResult)
+        {
+            ((Task)asyncResult).Wait();
+        }
 #endif
 
         public sealed override long Seek(long offset, SeekOrigin origin)

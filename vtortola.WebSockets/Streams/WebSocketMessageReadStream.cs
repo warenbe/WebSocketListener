@@ -12,7 +12,7 @@ namespace vtortola.WebSockets
 
         /// <inheritdoc />
         [Obsolete("Writing to the read stream is not allowed", true)]
-        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public sealed override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             throw new NotSupportedException();
         }

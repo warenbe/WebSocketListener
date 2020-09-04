@@ -1,5 +1,6 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Net;
 using vtortola.WebSockets.Http;
 
@@ -37,7 +38,7 @@ namespace vtortola.WebSockets
                 throw new WebSocketException(
                     $"Missing or wrong {Headers<ResponseHeader>.GetHeaderName(ResponseHeader.WebSocketAccept)} header in response.");
         }
-
+        
         /// <inheritdoc />
         public override string ToString()
         {

@@ -113,6 +113,8 @@ The client provides means to read and write messages. With the client, as in the
 
 ⚠️ You must receive messages even if you do not need them. If you do not do this, then random disconnects are possible.
 
+⚠️ Some synchronization mechanism is required to prevent parallel reading from one instance of WebSocket. Use [SemaphoreSlim](https://docs.microsoft.com/en-us/dotnet/api/system.threading.semaphoreslim?view=netframework-4.8) if you reading directly from  WebSocket. Use async while cycle and [BufferBlock](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.dataflow.bufferblock-1?view=netcore-2.2) if you want to form a read message queue.
+
 With the `webSocket` we can *await* for a message:
 
 ```cs
@@ -151,6 +153,9 @@ if(messageReader.MessageType == WebSocketMessageType.Binary)
 ```
 
 #### Sending messages
+
+⚠️ Some synchronization mechanism is required to prevent parallel writing to one instance of WebSocket. Use [SemaphoreSlim](https://docs.microsoft.com/en-us/dotnet/api/system.threading.semaphoreslim?view=netframework-4.8) if you writing directly to WebSocket. Use [ActionBlock](https://docs.microsoft.com/en-us/dotnet/api/system.threading.tasks.dataflow.actionblock-1?view=netcore-2.2) if you want to form a write message queue.
+
 Writing messages is also easy. The `webSocket.CreateMessageWriter(WebSocketMessageType)` method allows to create a write only  stream:
 
 ```cs
@@ -169,7 +174,13 @@ using (var streamWriter = new StreamWriter(messageWriter, utf8NoBom))
 }
 ```    
 
-Also binary messages:
+Or:
+
+```cs
+webSocket.WriteStringAsync("Hello World!");
+```
+
+Also binary stream messages:
 
 ```cs
 using (var messageWriter = webSocket.CreateMessageWriter(WebSocketMessageType.Binary))
@@ -177,6 +188,20 @@ using (var messageWriter = webSocket.CreateMessageWriter(WebSocketMessageType.Bi
    await myFileStream.CopyToAsync(messageWriter);
    await messageWriter.CloseAsync();    
 }
+```
+Also binary messages:
+
+```cs
+using (var messageWriter = webSocket.CreateMessageWriter(WebSocketMessageType.Binary))
+{
+   await writer.WriteAndCloseAsync(bytes, offset, count).ConfigureAwait(false);
+}
+```
+
+Or:
+
+```cs
+webSocket.WriteBytesAsync(bytes, offset, count);
 ```
 
 #### Example

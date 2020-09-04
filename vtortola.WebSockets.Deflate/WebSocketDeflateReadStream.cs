@@ -3,48 +3,61 @@ using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
+using vtortola.WebSockets.Tools;
 
 namespace vtortola.WebSockets.Deflate
 {
     public sealed class WebSocketDeflateReadStream : WebSocketMessageReadStream
     {
-        private readonly WebSocketMessageReadStream _inner;
-        private readonly DeflateStream _deflate;
-        private bool _isDisposed;
+        private const int STATE_OPEN = 0;
+        private const int STATE_CLOSED = 1;
+        private const int STATE_DISPOSED = 2;
 
-        public override WebSocketMessageType MessageType => _inner.MessageType;
-        public override WebSocketExtensionFlags Flags => _inner.Flags;
+        private readonly WebSocketMessageReadStream innerStream;
+        readonly DeflateStream deflateStream;
+        private volatile int state = STATE_OPEN;
 
-        public WebSocketDeflateReadStream([NotNull] WebSocketMessageReadStream inner)
+        public override WebSocketMessageType MessageType => this.innerStream.MessageType;
+        public override WebSocketExtensionFlags Flags => this.innerStream.Flags;
+
+        /// <inheritdoc />
+        internal override WebSocketListenerOptions Options => this.innerStream.Options;
+
+        public WebSocketDeflateReadStream([NotNull] WebSocketMessageReadStream innerStream)
         {
-            if (inner == null) throw new ArgumentNullException(nameof(inner));
+            if (innerStream == null) throw new ArgumentNullException(nameof(innerStream));
 
-            _inner = inner;
-            _deflate = new DeflateStream(_inner, CompressionMode.Decompress, true);
+            this.innerStream = innerStream;
+            this.deflateStream = new DeflateStream(innerStream, CompressionMode.Decompress, leaveOpen: true);
         }
-        
+
+        /// <inheritdoc />
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            return this.deflateStream.ReadAsync(buffer, offset, count, cancellationToken);
+        }
+
         /// <inheritdoc />
         public override Task CloseAsync()
         {
-           return _inner.CloseAsync();
-        }
-        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-        {
-            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
-            if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
-            if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+            if (Interlocked.CompareExchange(ref this.state, STATE_CLOSED, STATE_OPEN) != STATE_OPEN)
+            {
+                return TaskHelper.CompletedTask;
+            }
 
-            return _deflate.ReadAsync(buffer, offset, count, cancellationToken);
+            return this.innerStream.CloseAsync();
         }
+
+        /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            if (!_isDisposed)
+            if (Interlocked.Exchange(ref this.state, STATE_DISPOSED) == STATE_DISPOSED)
             {
-                _isDisposed = true;
-                _deflate.Dispose();
-                _inner.Dispose();
+                return;
             }
-            base.Dispose(disposing);
+
+            SafeEnd.Dispose(this.deflateStream);
+            SafeEnd.Dispose(this.innerStream);
         }
     }
 }

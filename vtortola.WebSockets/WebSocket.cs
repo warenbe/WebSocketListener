@@ -13,13 +13,14 @@ namespace vtortola.WebSockets
 
         [NotNull]
         public WebSocketHttpRequest HttpRequest { get; }
-
         [NotNull]
         public WebSocketHttpResponse HttpResponse { get; }
+
         public abstract bool IsConnected { get; }
         public abstract EndPoint LocalEndpoint { get; }
         public abstract TimeSpan Latency { get; }
         public abstract string SubProtocol { get; }
+        public abstract WebSocketCloseReason? CloseReason { get; }
 
         protected WebSocket([NotNull] WebSocketHttpRequest request, [NotNull] WebSocketHttpResponse response)
         {
@@ -42,7 +43,10 @@ namespace vtortola.WebSockets
         }
 
         public abstract Task SendPingAsync(byte[] data, int offset, int count);
+
         public abstract Task CloseAsync();
+
+        public abstract Task CloseAsync(WebSocketCloseReason closeCode);
 
         public abstract void Dispose();
 

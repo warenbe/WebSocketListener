@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net45</TargetFramework>
         <SignAssembly>True</SignAssembly>
@@ -18,8 +18,7 @@
         <ProjectReference Include="..\..\vtortola.WebSockets\vtortola.WebSockets.csproj" />
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="Castle.Core" Version="4.0.0" />
-        <PackageReference Include="Moq" Version="4.5.30" />
+        <PackageReference Include="Moq" Version="4.10.1" />
         <PackageReference Include="xunit" Version="2.2.0" />
         <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
     </ItemGroup>

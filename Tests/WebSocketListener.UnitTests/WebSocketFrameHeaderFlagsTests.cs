@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using vtortola.WebSockets.Rfc6455;
 using Xunit;
 

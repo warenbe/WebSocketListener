@@ -23,5 +23,7 @@ namespace vtortola.WebSockets
         {
             throw new NotSupportedException();
         }
+
+        public abstract Task WriteAndCloseAsync([NotNull]byte[] buffer, int offset, int count, CancellationToken cancellationToken);
     }
 }

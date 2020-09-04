@@ -1,61 +1,87 @@
-﻿using System;
+using System;
 using System.IO.Compression;
 using System.Threading;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 
 namespace vtortola.WebSockets.Deflate
 {
     public sealed class WebSocketDeflateWriteStream : WebSocketMessageWriteStream
     {
-        private static readonly byte[] BFINAL = new byte[] { 0 };
+        private static readonly byte[] FINAL_BYTE = new byte[] { 0 };
 
-        private readonly WebSocketMessageWriteStream _inner;
-        private readonly DeflateStream _deflate;
-        private bool _isClosed;
+        private const int STATE_OPEN = 0;
+        private const int STATE_CLOSED = 1;
+        private const int STATE_DISPOSED = 2;
 
-        public WebSocketDeflateWriteStream(WebSocketMessageWriteStream inner)
+        private readonly WebSocketMessageWriteStream innerStream;
+        private readonly DeflateStream deflateStream;
+        private volatile int state = STATE_OPEN;
+
+        /// <inheritdoc />
+        internal override WebSocketListenerOptions Options => this.innerStream.Options;
+
+        public WebSocketDeflateWriteStream([NotNull]WebSocketMessageWriteStream innerStream)
         {
-            if (inner == null) throw new ArgumentNullException(nameof(inner));
+            if (innerStream == null) throw new ArgumentNullException(nameof(innerStream));
 
-            _inner = inner;
-            _deflate = new DeflateStream(_inner, CompressionMode.Compress, true);
+            this.innerStream = innerStream;
+            this.deflateStream = new DeflateStream(innerStream, CompressionLevel.Optimal, leaveOpen: true);
         }
 
-        
-        public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        /// <inheritdoc />
+        public override Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
             if (buffer == null) throw new ArgumentNullException(nameof(buffer));
             if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
             if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
 
             if (count == 0)
-                return;
-            await _deflate.WriteAsync(buffer, offset, count, cancellationToken).ConfigureAwait(false);
+            {
+                return Task.FromResult(0);
+            }
+
+            return this.deflateStream.WriteAsync(buffer, offset, count, cancellationToken);
         }
 
         /// <inheritdoc />
-        public override Task FlushAsync(CancellationToken cancellationToken)
+        public override async Task WriteAndCloseAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            return this._deflate.FlushAsync(cancellationToken);
+            if (buffer == null) throw new ArgumentNullException(nameof(buffer));
+            if (offset < 0 || offset > buffer.Length) throw new ArgumentOutOfRangeException(nameof(offset));
+            if (count < 0 || offset + count > buffer.Length) throw new ArgumentOutOfRangeException(nameof(count));
+
+            if (count > 0)
+            {
+                await this.deflateStream.WriteAsync(buffer, offset, count, cancellationToken);
+            }
+
+            await this.CloseAsync().ConfigureAwait(false);
         }
 
+        /// <inheritdoc />
         public override async Task CloseAsync()
         {
-            if (_isClosed)
+            if (Interlocked.CompareExchange(ref this.state, STATE_CLOSED, STATE_OPEN) != STATE_OPEN)
                 return;
 
-            _isClosed = true;
-            await _deflate.FlushAsync().ConfigureAwait(false);
-            SafeEnd.Dispose(_deflate); // TODO DeflateStream cant async flush buffer so this will cause sync Write call and blocks one thread from pool
-            await _inner.WriteAsync(BFINAL, 0, 1).ConfigureAwait(false);
-            await _inner.CloseAsync().ConfigureAwait(false);
+            // flush remaining data
+            await this.deflateStream.FlushAsync(CancellationToken.None);
+            this.deflateStream.Dispose(); // will flush deflate data
+            // close inner stream
+            await this.innerStream.WriteAndCloseAsync(FINAL_BYTE, 0, 1, CancellationToken.None).ConfigureAwait(false);
         }
 
+        /// <inheritdoc />
         protected override void Dispose(bool disposing)
         {
-            SafeEnd.Dispose(_deflate);
-            SafeEnd.Dispose(_inner);
+            if (Interlocked.Exchange(ref this.state, STATE_DISPOSED) == STATE_DISPOSED)
+                return;
+
+            SafeEnd.Dispose(this.deflateStream);
+            SafeEnd.Dispose(this.innerStream);
             base.Dispose(disposing);
         }
+
     }
 }

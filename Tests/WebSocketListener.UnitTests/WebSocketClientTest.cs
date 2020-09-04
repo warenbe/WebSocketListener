@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using vtortola.WebSockets.Deflate;
 using vtortola.WebSockets.Rfc6455;
 using vtortola.WebSockets.Transports.NamedPipes;
 using Xunit;
@@ -35,7 +36,7 @@ namespace vtortola.WebSockets.UnitTests
         {
             var options = new WebSocketListenerOptions()
             {
-                Logger = new TestLogger(this.logger) { IsDebugEnabled = System.Diagnostics.Debugger.IsAttached }
+                Logger = new TestLogger(this.logger) { IsDebugEnabled = System.Diagnostics.Debugger.IsAttached },
             };
             options.Standards.RegisterRfc6455();
             var webSocketClient = new WebSocketClient(options);
@@ -116,7 +117,10 @@ namespace vtortola.WebSockets.UnitTests
             {
                 Logger = new TestLogger(this.logger) { IsDebugEnabled = System.Diagnostics.Debugger.IsAttached }
             };
-            options.Standards.RegisterRfc6455();
+            options.Standards.RegisterRfc6455(rfc6455 =>
+            {
+                rfc6455.MessageExtensions.Add(new WebSocketDeflateExtension());
+            });
             options.Transports.RegisterNamedPipes();
 
             var listenEndPoints = new[] { new Uri(address) };

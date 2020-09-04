@@ -1,7 +1,6 @@
-﻿
-namespace vtortola.WebSockets.Rfc6455
+namespace vtortola.WebSockets
 {
-    public enum WebSocketCloseReasons : short
+    public enum WebSocketCloseReason : short
     {
         NormalClose = 1000,
         GoingAway = 1001,
