@@ -142,7 +142,7 @@ namespace vtortola.WebSockets.Transports.Sockets
 
             var socket = acceptTask.Result;
             if (this.log.IsDebugEnabled)
-                this.log.Debug($"New socket accepted. Remote address: '{socket.RemoteEndPoint}', Local address: {socket.LocalEndPoint}.");
+                this.log.Debug("New socket accepted.");
 
             try { return this.CreateConnection(socket); }
             catch
